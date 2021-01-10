@@ -10,7 +10,7 @@
 
 library(tidyverse)
 library('DBI')
-
+theme_set(theme_classic())
 
 # file paths --------------------------------------------------------------
 
@@ -21,7 +21,7 @@ sitedata_dir <- "/media/grad/kulmatiski-group1/stepwat/sitedata/"
 # code should work both on cluster and locally if dir mounted
 sitedata_dir <- if(dir.exists(sitedata_dir)) {
   sitedata_dir
-} else if (dir.exits("../sitedata")) {
+} else if (dir.exists("../sitedata")) {
   "../sitedata"
 } else {
   error("no sitedata directory")
@@ -47,8 +47,46 @@ dbListFields(db_amb, "sw2_yearly_slyrs")
 # db queries --------------------------------------------------------------
 
 # SWCBULK
-q1 <- paste("SELECT site, Year, VWCBULK_Lyr_1_Mean, VWCBULK_Lyr_3_Mean",
+q1 <- paste("SELECT *",
             "FROM sw2_yearly_slyrs;")
 
-df1_amb <- dbGetQuery(db_amb, q1)
-dim(df)
+df1_amb <- dbGetQuery(db_amb, q1) %>%
+  mutate(intensity = "ambient")
+df1_2x <- dbGetQuery(db_2x, q1) %>%
+  mutate(intensity = "event 2x intensity")
+
+# means across years
+yr_mean <- bind_rows(df1_amb, df1_2x) %>%
+  as_tibble() %>%
+  group_by(site, intensity, RCP) %>%
+  summarise_at(.vars = vars(matches("_Lyr_\\d_Mean")),
+               .funs = mean) %>%
+  mutate(RCP = ifelse(is.na(RCP), "Current", RCP))
+
+yr_mean_long <- yr_mean %>%
+  select(site, intensity, RCP, matches("VWCBULK|TRANSP_total")) %>%
+  pivot_longer(cols = matches("Lyr_\\d_Mean")) %>%
+  mutate(variable = str_extract(name, "^[A-Za-z_]*(?=_Lyr)"),
+         layer = str_extract(name, "\\d")) %>%
+  select(-name) %>%
+  pivot_wider(names_from = variable, values_from = value)
+
+# Figures -----------------------------------------------------------------
+
+
+# * across sites ----------------------------------------------------------
+
+# vwc by rcp and layer
+yr_mean_long %>%
+  filter(layer %in% c(1, 3, 6)) %>%
+  ggplot(aes(x = VWCBULK, y = intensity)) +
+    geom_boxplot()+
+    coord_flip() +
+    facet_grid(layer~RCP)
+
+yr_mean_long %>%
+  filter(layer %in% c(1, 3, 6)) %>%
+  ggplot(aes(x = TRANSP_transp_total, y = intensity)) +
+  geom_boxplot()+
+  coord_flip() +
+  facet_grid(layer~RCP)
