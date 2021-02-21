@@ -16,11 +16,15 @@ theme_set(theme_classic())
 
 # kg1 directory should mounted
 
-sitedata_dir <- "/media/grad/kulmatiski-group1/stepwat/sitedata/"
+# this code added so that it will but on cluster and pc
 
+sitedata_dir <- "/media/grad/kulmatiski-group1/stepwat/sitedata/"
+chpc_dir <- "/uufs/chpc.utah.edu/common/home/kulmatiski-group1/stepwat/site_data"
 # code should work both on cluster and locally if dir mounted
 sitedata_dir <- if(dir.exists(sitedata_dir)) {
   sitedata_dir
+} else if (dir.exists(chpc_dir)) {
+  chpc_dir
 } else if (dir.exists("../sitedata")) {
   "../sitedata"
 } else {
@@ -41,32 +45,96 @@ db_2x <- dbConnect(RSQLite::SQLite(), db_2x_path)
 
 # understand structure ----------------------------------------------------
 
-dbListTables(db_amb)
-dbListFields(db_amb, "sw2_monthly")
-dbListFields(db_amb, "sw2_yearly_slyrs")
+tables <- dbListTables(db_amb)
+names(tables) <- tables
+# list columns
+map(tables, function(table) dbListFields(db_amb, table))
+
 # db queries --------------------------------------------------------------
 
-# SWCBULK
+# sw2_yearly_slyrs (yearly output for each soil layer)
 q1 <- paste("SELECT *",
-            "FROM sw2_yearly_slyrs;")
-
-df1_amb <- dbGetQuery(db_amb, q1) %>%
+            "FROM sw2_yearly_slyrs",
+            "WHERE GCM = 'Current' AND Year >100;")
+sw2_yearly_slyrs_amb <- dbGetQuery(db_amb, q1) %>%
   mutate(intensity = "ambient")
-df1_2x <- dbGetQuery(db_2x, q1) %>%
+sw2_yearly_slyrs_2x <- dbGetQuery(db_2x, q1) %>%
   mutate(intensity = "event 2x intensity")
 
-# means across years
-yr_mean <- bind_rows(df1_amb, df1_2x) %>%
+# Biomass output from stepwat2
+q2 <- paste("SELECT *",
+            "FROM Biomass",
+            "WHERE GCM = 'Current' AND Year >100;")
+
+bio_amb <- dbGetQuery(db_amb, q2) %>%
+  mutate(intensity = "ambient")
+bio_2x <- dbGetQuery(db_2x, q2) %>%
+  mutate(intensity = "event 2x intensity")
+
+# sw2_yearly_slyrs summaries ----------------------------------------------
+
+
+# means across years for each layer
+soil_mean0 <- bind_rows(sw2_yearly_slyrs_amb, sw2_yearly_slyrs_2x) %>%
+  # discard first 100 years
+  filter(Year > 100) %>%
   as_tibble() %>%
-  group_by(site, intensity, RCP) %>%
+  group_by(site, intensity) %>%
   summarise_at(.vars = vars(matches("_Lyr_\\d_Mean")),
-               .funs = mean) %>%
-  mutate(RCP = ifelse(is.na(RCP), "Current", RCP))
+               .funs = mean)
 
-yr_mean_long0 <- yr_mean %>%
-  select(site, intensity, RCP, matches("VWCBULK|TRANSP_total")) %>%
-  pivot_longer(cols = matches("Lyr_\\d_Mean"))
 
+# long format
+soil_long0 <- soil_mean0 %>%
+  select(site, intensity, matches("_Mean")) %>%
+  pivot_longer(cols = matches("_Mean")) %>%
+  mutate(layer = str_extract(name, "(?<=Lyr_)\\d"), # extracting layer
+         name = str_replace(name, "_Lyr_\\d_Mean", ""), # removing layer from name
+         name = str_replace(name, "_transp", ""), # shorting names duplicated names
+         name = str_replace(name, "_swa", ""), #
+         PFT = str_extract(name, "(?<=_)[A-z]+$"),  # extracting plant functional type
+         name = str_replace(name, "_[A-z]+$", "")) # remove PFT from name
+
+# dataframe with values broken down by plant functional types
+lyr_yr_PFT1 <- soil_long0 %>%
+  filter(!is.na(PFT))%>%
+  pivot_wider(id_cols = c("site", "intensity", "layer", "PFT"),
+              names_from = "name",
+              values_from = "value")
+
+# metrics that don't use PFT or total pft
+lyr_yr_all1 <- soil_long0 %>%
+  filter(is.na(PFT)| PFT == "total") %>%
+  select(-PFT)%>%
+  pivot_wider(id_cols = c("site", "intensity", "layer"),
+              names_from = "name",
+              values_from = "value")
+
+# sw2_yearly summaries ----------------------------------------------------
+
+# Note: group by SoilTreatment, grazing etc as needed depending on the model
+
+# What is the STdDev column?
+
+#CONTINUE HERE: NEXT CREATE MEANS OF BIOMASS VARIABLES
+# PRINT OUT COLUMN NAMES.
+sw2_yr_mean0 <- bind_rows(bio_amb, bio_2x) %>%
+  as_tibble() %>%
+  group_by(site, intensity, SoilTreatment) %>%
+  summarise_at(.vars = vars(matches("_Mean$")),
+               .funs = mean)
+
+# longer
+sw2_yr_mean0 %>%
+  pivot_longer(cols = matches("_Mean")) %>%
+  mutate(name = str_replace(name, "_Mean$", "")) %>%
+  pull(name) %>% unique() %>% sort()
+
+# old code below ----------------------------------------------------------
+
+
+
+unique(yr_mean_long0$name) %>% sort()
 # difference between ambient and 2x intensity
 yr_diff <- yr_mean_long0 %>%
   pivot_wider(names_from = "intensity", values_from = "value") %>%
