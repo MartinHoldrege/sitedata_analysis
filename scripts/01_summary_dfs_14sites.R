@@ -106,7 +106,7 @@ yr_diff %>%
   coord_flip() +
   facet_grid(~layer) +
   labs(subtitle = "mean ambient and 2x intensity vwc difference at site by Layer and RCP",
-       y = "VWCBULK diff (intensity - ambient)")
+       x = "VWCBULK diff (intensity - ambient)")
 
 yr_mean_long %>%
   filter(layer %in% c(1, 3, 6)) %>%
@@ -123,7 +123,7 @@ yr_diff %>%
   coord_flip() +
   facet_grid(~layer) +
   labs(subtitle = "mean ambient and 2x intensity transp_total difference at site by Layer and RCP",
-       y = "total transp diff (intensity - ambient)")
+       x = "total transp diff (intensity - ambient)")
 
 dev.off()
 dbDisconnect(db_amb)
