@@ -9,6 +9,7 @@
 # dependencies ------------------------------------------------------------
 
 library(tidyverse)
+library(readr)
 library('DBI')
 theme_set(theme_classic())
 
@@ -71,6 +72,9 @@ bio_amb <- dbGetQuery(db_amb, q2) %>%
 bio_2x <- dbGetQuery(db_2x, q2) %>%
   mutate(intensity = "event 2x intensity")
 
+dbDisconnect(db_amb)
+dbDisconnect(db_2x)
+
 # sw2_yearly_slyrs summaries ----------------------------------------------
 
 
@@ -112,87 +116,44 @@ lyr_yr_all1 <- soil_long0 %>%
 
 # sw2_yearly summaries ----------------------------------------------------
 
-# Note: group by SoilTreatment, grazing etc as needed depending on the model
-
-# What is the STdDev column?
-
-#CONTINUE HERE: NEXT CREATE MEANS OF BIOMASS VARIABLES
-# PRINT OUT COLUMN NAMES.
-sw2_yr_mean0 <- bind_rows(bio_amb, bio_2x) %>%
+# yearly means of biomass and abiotic variables. Wide foremat
+sw2_yr_mean0 <-bind_rows(bio_amb, bio_2x) %>%
   as_tibble() %>%
-  group_by(site, intensity, SoilTreatment) %>%
-  summarise_at(.vars = vars(matches("_Mean$")),
-               .funs = mean)
+  # only 1 level SpeciesTreatment, dst, grazing and RGroupTreatment, WildFire,
+  # so removing here
+  # note group by those variables if varied in model runs
+  select(-matches("_(std)|(Indivs)|(Pfire)|(PRstd)|(PR)|(RSize)$"),
+         -c(years, RCP, SpeciesTreatment, Year, RGroupTreatment, dst, grazing,
+            WildFire)) %>%
+  group_by(site, intensity, SoilTreatment, GCM) %>%
+  summarise_all(.funs = mean) %>%
+  ungroup()
 
-# longer
-sw2_yr_mean0 %>%
-  pivot_longer(cols = matches("_Mean")) %>%
-  mutate(name = str_replace(name, "_Mean$", "")) %>%
-  pull(name) %>% unique() %>% sort()
+# just abiotic variables (these are already in "long" format)
+# What is the STdDev column?
+sw2_yr_abiotic1 <- sw2_yr_mean0 %>%
+  select(site, intensity, SoilTreatment, GCM, PPT, StdDev, Temp, StdDev.1)
 
-# old code below ----------------------------------------------------------
+# biomass long format
+sw2_yr_bio1 <-  sw2_yr_mean0 %>%
+  select(-c(PPT, StdDev, Temp, StdDev.1)) %>%
+  pivot_longer(cols = -c(GCM, site, intensity, SoilTreatment),
+               names_to = "PFT",
+               values_to = "biomass")
+
+
+# save files --------------------------------------------------------------
+
+# soil lyr files
+write_csv(lyr_yr_PFT1, "data-processed/14sites/yr_mean_SM_by_lyr-PFT_14sites.csv")
+
+write_csv(lyr_yr_all1, "data-processed/14sites/yr_mean_SM_by_lyr-all_14sites.csv")
+
+# biomass files
+write_csv(sw2_yr_abiotic1, "data-processed/14sites/biomass_mean_abiotic_14sites.csv")
+
+write_csv(sw2_yr_bio1, "data-processed/14sites/biomass_mean_14sites.csv")
 
 
 
-unique(yr_mean_long0$name) %>% sort()
-# difference between ambient and 2x intensity
-yr_diff <- yr_mean_long0 %>%
-  pivot_wider(names_from = "intensity", values_from = "value") %>%
-  mutate(diff = `event 2x intensity` - ambient) %>%
-  select(-`event 2x intensity`, -ambient) %>%
-  mutate(variable = str_extract(name, "^[A-Za-z_]*(?=_Lyr)"),
-         layer = str_extract(name, "\\d")) %>%
-  select(-name) %>%
-  pivot_wider(names_from = variable, values_from = diff)
 
-yr_mean_long <- yr_mean_long0 %>%
-  mutate(variable = str_extract(name, "^[A-Za-z_]*(?=_Lyr)"),
-         layer = str_extract(name, "\\d")) %>%
-  select(-name) %>%
-  pivot_wider(names_from = variable, values_from = value)
-
-# Figures -----------------------------------------------------------------
-
-# dir.create("figures")
-# dir.create("figures/14sites")
-# * across sites ----------------------------------------------------------
-
-pdf("figures/14sites/ambient_vs_2x_14sites.pdf")
-# vwc by rcp and layer
-yr_mean_long %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = VWCBULK, y = intensity)) +
-    geom_boxplot()+
-    coord_flip() +
-    facet_grid(layer~RCP) +
-    labs(subtitle = "Mean site level VWC by depth and RCP")
-
-yr_diff %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = VWCBULK, y = RCP)) +
-  geom_boxplot()+
-  coord_flip() +
-  facet_grid(~layer) +
-  labs(subtitle = "mean ambient and 2x intensity vwc difference at site by Layer and RCP",
-       x = "VWCBULK diff (intensity - ambient)")
-
-yr_mean_long %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = TRANSP_transp_total, y = intensity)) +
-  geom_boxplot()+
-  coord_flip() +
-  facet_grid(layer~RCP) +
-  labs(subtitle = "Mean site level transpiration by depth and RCP")
-
-yr_diff %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = TRANSP_transp_total, y = RCP)) +
-  geom_boxplot()+
-  coord_flip() +
-  facet_grid(~layer) +
-  labs(subtitle = "mean ambient and 2x intensity transp_total difference at site by Layer and RCP",
-       x = "total transp diff (intensity - ambient)")
-
-dev.off()
-dbDisconnect(db_amb)
-dbDisconnect(db_2x)
