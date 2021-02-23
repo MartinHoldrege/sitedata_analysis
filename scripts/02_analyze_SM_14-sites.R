@@ -1,61 +1,194 @@
+# Martin Holdrege
 
-unique(yr_mean_long0$name) %>% sort()
-# difference between ambient and 2x intensity
-yr_diff <- yr_mean_long0 %>%
-  pivot_wider(names_from = "intensity", values_from = "value") %>%
-  mutate(diff = `event 2x intensity` - ambient) %>%
-  select(-`event 2x intensity`, -ambient) %>%
-  mutate(variable = str_extract(name, "^[A-Za-z_]*(?=_Lyr)"),
-         layer = str_extract(name, "\\d")) %>%
-  select(-name) %>%
-  pivot_wider(names_from = variable, values_from = diff)
+# Script start 2/21/21
 
-yr_mean_long <- yr_mean_long0 %>%
-  mutate(variable = str_extract(name, "^[A-Za-z_]*(?=_Lyr)"),
-         layer = str_extract(name, "\\d")) %>%
-  select(-name) %>%
-  pivot_wider(names_from = variable, values_from = value)
+# Purpose is to summarize soil moisture data of preliminary stepwat run on 14 sites
+# Use descriptive stats/figures to compare ambient and 2x precipitation intensity
 
-# Figures -----------------------------------------------------------------
+# NEXT: WORK ON RESPONSES ALONG ARIDITY AND TEMPERATURE GRADIENTS
 
-# dir.create("figures")
-# dir.create("figures/14sites")
-# * across sites ----------------------------------------------------------
+# dependencies ------------------------------------------------------------
 
-pdf("figures/14sites/ambient_vs_2x_14sites.pdf")
-# vwc by rcp and layer
-yr_mean_long %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = VWCBULK, y = intensity)) +
-  geom_boxplot()+
-  coord_flip() +
-  facet_grid(layer~RCP) +
-  labs(subtitle = "Mean site level VWC by depth and RCP")
+library(tidyverse)
+library(readr)
+theme_set(theme_classic())
+source("scripts/functions.R")
 
-yr_diff %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = VWCBULK, y = RCP)) +
-  geom_boxplot()+
-  coord_flip() +
-  facet_grid(~layer) +
-  labs(subtitle = "mean ambient and 2x intensity vwc difference at site by Layer and RCP",
-       x = "VWCBULK diff (intensity - ambient)")
+# read in data ------------------------------------------------------------
 
-yr_mean_long %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = TRANSP_transp_total, y = intensity)) +
-  geom_boxplot()+
-  coord_flip() +
-  facet_grid(layer~RCP) +
-  labs(subtitle = "Mean site level transpiration by depth and RCP")
+# soil moisture metrics by PFT and layer
 
-yr_diff %>%
-  filter(layer %in% c(1, 3, 6)) %>%
-  ggplot(aes(x = TRANSP_transp_total, y = RCP)) +
-  geom_boxplot()+
-  coord_flip() +
-  facet_grid(~layer) +
-  labs(subtitle = "mean ambient and 2x intensity transp_total difference at site by Layer and RCP",
-       x = "total transp diff (intensity - ambient)")
+# lyr_PFT1 <- read_csv("data-processed/14sites/yr_mean_SM_by_lyr-PFT_14sites.csv")
+
+# soil moisture metrics by layer, (not by PFT)
+lyr_all1 <- read_csv("data-processed/14sites/yr_mean_SM_by_lyr-all_14sites.csv")
+
+# sw2_yearly table annual means
+sw2_yrly1 <- read_csv("data-processed/14sites/sw2_yr_means_14sites.csv")
+
+# summary dfs -------------------------------------------------------------
+
+# * aridity index/climate -------------------------------------------------
+
+climate1 <- sw2_yrly1 %>%
+  # these values should be the same for both trmts
+  # however, worth confirming this at some point
+  filter(intensity == "ambient", SoilTreatment == "soils_fixed1") %>%
+  select(site, matches("TEMP_(min|avg|max)|PRECIP_ppt|PET_pet_cm")) %>%
+  mutate(aridity_index = PRECIP_ppt_Mean/PET_pet_cm_Mean)
+
+hist(climate1$aridity_index)
+hist(climate1$PRECIP_ppt_Mean)
+hist(climate1$TEMP_avg_C_Mean)
+# * soil moisture ----------------------------------------------------------
+
+# total transpiration (to provide a total transpiration across layers)
+tot_transp <- lyr_all1 %>%
+  # later group by SoilTreatment when appropriate
+  mutate(intensity = intensity_lookup[intensity]) %>%
+  group_by(site, intensity) %>%
+  summarize(TRANSP = sum(TRANSP), .groups = "drop") %>%
+  pivot_wider(names_from = "intensity", values_from = "TRANSP",
+              names_prefix = "TRANSP_") %>%
+  mutate(TRANSP_diff = TRANSP_2x_intensity - TRANSP_ambient) %>%
+  left_join(climate1, by = "site")
+
+# note: VWCBULK and VWCMATRIC look identical (1:1 line)
+lyr_all_diff1 <- lyr_all1 %>%
+  mutate(intensity = intensity_lookup[intensity]) %>%
+  select(site, intensity, layer, VWCBULK, WETDAY, TRANSP) %>%
+  pivot_wider(names_from = "intensity",
+              values_from = c("VWCBULK", "WETDAY", "TRANSP")) %>%
+  mutate(VWC_diff = VWCBULK_2x_intensity - VWCBULK_ambient,
+         WETDAY_diff = WETDAY_2x_intensity - WETDAY_ambient,
+         TRANSP_diff = TRANSP_2x_intensity - TRANSP_ambient,
+         depth = lyr2depth(layer)) %>%
+  left_join(climate1, by = "site")
+
+
+
+
+
+# figures -----------------------------------------------------------------
+
+
+# * fig params ------------------------------------------------------------
+
+caption <- paste("Data from preliminary STEPWAT2 run for 14 sites.",
+                 "PPT intensity doubled by adding odd to even events.",
+                 "\nEvents defined as one or more consecutive PPT days.")
+transp_lab1 <- "Transpiration difference (2x intensity - ambient; cm)"
+vwc_lab1 <- "VWC difference (2x intensity - ambient; cm/cm)"
+depth_lab  <- "Soil depth (cm)"
+wetday_lab1 <- "Wet day difference (2x intensity - ambient; # days > -1.5 MPa)"
+aridity_lab <- "Aridity index (MAP/PET)"
+# base of figures by soil layers
+lyr_base <- function() {
+  list(stat_summary(fun = mean, geom = "line", color = "blue"),
+       stat_summary(fun = mean, geom = "point", color = "blue"),
+       geom_hline(yintercept = 0, linetype = 2, alpha = 0.7),
+       labs(x = depth_lab,
+           caption = caption),
+       xlim(c(-155, 0)),
+      coord_flip()
+  )
+}
+
+line_base <- function() {
+  list(geom_line(aes(group = site), alpha = 0.2),
+       labs(subtitle = "Gray lines show each site, blue is the mean"))
+}
+
+boxplot_base <- function() {
+  list(geom_boxplot(aes(group = -depth)),
+       labs(subtitle = "Blue line shows the mean across sites"))
+}
+
+aridity_base <- function() {
+  list(geom_hline(yintercept = 0, alpha = 0.7, linetype = 2),
+       geom_point(aes(x = aridity_index)),
+       facet_wrap(~as.factor(depth)),
+       geom_smooth(aes(x = aridity_index), method = "lm", se = FALSE),
+       labs(x = aridity_lab,
+            caption = caption,
+            subtitle = "Soil layers (cm) shown in separate panels")
+       )
+}
+
+# create both boxplot and line graphs
+box_and_line <- function(g) {
+  g1 <- g + boxplot_base() + lyr_base()
+  g2 <- g + line_base() + lyr_base()
+  list(g1, g2)
+}
+# * sm sum across lyrs ----------------------------------------------------
+
+pdf("figures/14sites/SM_across_lyrs-PFT_v1.pdf")
+# soil moisture across layers (ie transpiration or other cumulative metrics)
+
+ggplot(tot_transp, aes(x = TRANSP_diff)) +
+  geom_boxplot() +
+  geom_rug(color = "red") +
+  labs(x = transp_lab1,
+       title = "Intensity effect on total transpiration across soil layers",
+       caption = caption) +
+  theme(axis.ticks.y = element_blank(),
+        axis.text.y = element_blank())
+
+ggplot(tot_transp, aes(x = aridity_index, y = TRANSP_diff)) +
+  geom_point() +
+  geom_smooth(method = "lm") +
+  labs(y = transp_lab1,
+       x = aridity_lab,
+       title = "Total transpiration differnce across soil layers vs aridity",
+       caption = caption)
 
 dev.off()
+
+
+# * SM by lyrs across PFT ---------------------------------------------------
+
+pdf("figures/14sites/SM_by_lyr_across_PFT_v1.pdf")
+
+# ** VWC ------------------------------------------------------------------
+g <- ggplot(lyr_all_diff1, aes(x = -depth, y = VWC_diff)) +
+  labs(y = vwc_lab1,
+       title = "Intensity effect on volumetric water content")
+
+box_and_line(g)
+
+ggplot(lyr_all_diff1, aes(y = VWC_diff)) +
+  labs(y = vwc_lab1,
+       title = "Change in volumetric water content vs. aridity") +
+  aridity_base()
+
+# WETDAYS
+g <- ggplot(lyr_all_diff1, aes(x = -depth, y = WETDAY_diff)) +
+  labs(y = wetday_lab1,
+       title = "Intensity effect on wet days")
+
+box_and_line(g)
+
+ggplot(lyr_all_diff1, aes(y = WETDAY_diff)) +
+  labs(y = wetday_lab1,
+       title = "Change in number of wet days vs. aridity") +
+  aridity_base()
+
+# total transpiration
+g <- ggplot(lyr_all_diff1, aes(x = -depth, y = TRANSP_diff)) +
+  labs(y = transp_lab1,
+       title = "Intensity effect on total transpiration from each layer")
+
+box_and_line(g)
+
+g1 <- ggplot(lyr_all_diff1, aes(y = TRANSP_diff)) +
+  labs(y = transp_lab1,
+       title = "Change in transpiration vs. aridity") +
+  aridity_base()
+
+g1 +
+  facet_wrap(~factor(depth), scales = "free_y")
+
+dev.off()
+
+
