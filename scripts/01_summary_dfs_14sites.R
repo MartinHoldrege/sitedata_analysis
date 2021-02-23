@@ -72,6 +72,15 @@ bio_amb <- dbGetQuery(db_amb, q2) %>%
 bio_2x <- dbGetQuery(db_2x, q2) %>%
   mutate(intensity = "event 2x intensity")
 
+# sw2_yearly_slyrs (yearly output for each soil layer)
+q3 <- paste("SELECT *",
+            "FROM sw2_yearly",
+            "WHERE GCM = 'Current' AND Year >100;")
+sw2_yearly_amb <- dbGetQuery(db_amb, q3) %>%
+  mutate(intensity = "ambient")
+sw2_yearly_2x <- dbGetQuery(db_2x, q3) %>%
+  mutate(intensity = "event 2x intensity")
+
 dbDisconnect(db_amb)
 dbDisconnect(db_2x)
 
@@ -114,7 +123,18 @@ lyr_yr_all1 <- soil_long0 %>%
               names_from = "name",
               values_from = "value")
 
-# sw2_yearly summaries ----------------------------------------------------
+# sw2_yearly summaries ---------------------------------------------------
+
+# means across years
+sw2_yrly1 <- bind_rows(sw2_yearly_amb, sw2_yearly_2x) %>%
+  # discard first 100 years
+  as_tibble() %>%
+  group_by(site, intensity, SoilTreatment) %>%
+  summarise_at(.vars = vars(matches("_Mean$")),
+               .funs = mean)
+
+
+# BIOMASS summaries ----------------------------------------------------
 
 # yearly means of biomass and abiotic variables. Wide foremat
 sw2_yr_mean0 <-bind_rows(bio_amb, bio_2x) %>%
@@ -148,6 +168,9 @@ sw2_yr_bio1 <-  sw2_yr_mean0 %>%
 write_csv(lyr_yr_PFT1, "data-processed/14sites/yr_mean_SM_by_lyr-PFT_14sites.csv")
 
 write_csv(lyr_yr_all1, "data-processed/14sites/yr_mean_SM_by_lyr-all_14sites.csv")
+
+# soilwat2 yearly
+write_csv(sw2_yrly1, "data-processed/14sites/sw2_yr_means_14sites.csv")
 
 # biomass files
 write_csv(sw2_yr_abiotic1, "data-processed/14sites/biomass_mean_abiotic_14sites.csv")
