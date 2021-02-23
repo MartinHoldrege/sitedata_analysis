@@ -13,7 +13,7 @@ library(tidyverse)
 library(readr)
 theme_set(theme_classic())
 source("scripts/functions.R")
-
+source("scripts/02_climate_14sites.R")
 # read in data ------------------------------------------------------------
 
 # soil moisture metrics by PFT and layer
@@ -23,23 +23,8 @@ source("scripts/functions.R")
 # soil moisture metrics by layer, (not by PFT)
 lyr_all1 <- read_csv("data-processed/14sites/yr_mean_SM_by_lyr-all_14sites.csv")
 
-# sw2_yearly table annual means
-sw2_yrly1 <- read_csv("data-processed/14sites/sw2_yr_means_14sites.csv")
-
 # summary dfs -------------------------------------------------------------
 
-# * aridity index/climate -------------------------------------------------
-
-climate1 <- sw2_yrly1 %>%
-  # these values should be the same for both trmts
-  # however, worth confirming this at some point
-  filter(intensity == "ambient", SoilTreatment == "soils_fixed1") %>%
-  select(site, matches("TEMP_(min|avg|max)|PRECIP_ppt|PET_pet_cm")) %>%
-  mutate(aridity_index = PRECIP_ppt_Mean/PET_pet_cm_Mean)
-
-hist(climate1$aridity_index)
-hist(climate1$PRECIP_ppt_Mean)
-hist(climate1$TEMP_avg_C_Mean)
 # * soil moisture ----------------------------------------------------------
 
 # total transpiration (to provide a total transpiration across layers)
