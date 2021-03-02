@@ -102,7 +102,7 @@ caption <- paste("Data from preliminary STEPWAT2 run for 14 sites.",
                  "PPT intensity doubled by adding odd to even events.",
                  "\nEvents defined as one or more consecutive PPT days.")
 bio_lab <- "Biomass (g/m2)"
-bio_diff_lab1 <- expression(Biomass[2*x]~-~Biomass[ambient]~"("*gm^2*")")
+bio_diff_lab1 <- expression(Biomass[2*x]~-~Biomass[ambient]~"("*gm^-2*")")
 SGr_diff_lab1 <- expression("shrub:grass difference ("*S*":"*G[2*x]~-~S*":"*G[ambient]*")")
 PFT_lab <- "Plant functional type"
 aridity_lab <- "Aridity index (MAP/PET)"
