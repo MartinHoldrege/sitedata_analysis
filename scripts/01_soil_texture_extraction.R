@@ -95,21 +95,6 @@ p05 <- quant_df[quant_df$quant == 0.05, ]
 p50 <- quant_df[quant_df$quant == 0.5, ]
 p95 <- quant_df[quant_df$quant == 0.95, ]
 
-# strictly percentile based categories (not using anymore, b/ doesn't work)
-# sand
-sa95 <- list("CLAY" = p50$CLAY, SAND = p95$SAND)
-sa95$SILT <- 100 - sa95$CLAY - sa95$SAND
-
-# silt
-si95 <- list("CLAY" = p50$CLAY, SILT = p95$SILT)
-si95$SAND <- 100 - si95$CLAY - si95$SILT
-
-# clay
-cl95 <- list("CLAY" = p95$CLAY, SILT = p50$SILT)
-cl95$SAND <- 100 - cl95$CLAY - cl95$SILT
-
-soils95 <- bind_rows(sa95, si95, cl95)
-
 third_class <- function(list) {
   # sum rounded elements of list of length 2, subtract from 100
   # ie calculating third texture class, based on list with 2 texture classes
@@ -148,6 +133,8 @@ soilsp <- bind_rows(sap, sip, clp, med) %>%
   .[c("CLAY", "SILT", "SAND")] %>%
   round() %>%
   as.data.frame()
+
+soilsp$name <- c("sand", "silt", "clay", "median")
 rowSums(soilsp) # need to be 100
 
 # figures -----------------------------------------------------------------
