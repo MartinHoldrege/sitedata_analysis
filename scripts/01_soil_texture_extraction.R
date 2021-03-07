@@ -15,6 +15,8 @@
 library(tidyverse)
 library(raster)
 library(soiltexture) # for soil triangles
+library(data.table)
+source("scripts/functions.R")
 
 # load raster data -----------------------------------------------------
 
@@ -74,7 +76,7 @@ map_dbl(df1, mean) %>%
 cdfs <- map(df1, ecdf) # distributions soil texture classes
 
 # soil
-quants <- c(0.01, 0.05, 0.5, 0.95, 0.99) # quantiles to examine
+quants <- c(0.01, 0.02, 0.05, 0.5, 0.95, 0.98, 0.99) # quantiles to examine
 
 # quantiles by soil texture
 quant_df <- map_dfc(cdfs, .f = quantile, quants) %>%
@@ -82,34 +84,81 @@ quant_df <- map_dfc(cdfs, .f = quantile, quants) %>%
 
 # medians
 med_df <- quant_df[quant_df$quant == 0.5, ]
-med <- list(CLAY =  med_df$CLAY, SILT = 100 - med_df$SAND - med_df$CLAY,
-         SAND = med_df$SAND, type = "silt_loam")
+
+# median soil
+med <- list(CLAY =  round(med_df$CLAY), SILT = 100 - round(med_df$SAND) - round(med_df$CLAY),
+         SAND = round(med_df$SAND), type = "silt_loam")
 names(med) <- str_extract(names(med), "[A-z]+")
 
-# 5th percentile
+# percentiles
 p05 <- quant_df[quant_df$quant == 0.05, ]
+p50 <- quant_df[quant_df$quant == 0.5, ]
+p95 <- quant_df[quant_df$quant == 0.95, ]
 
+# strictly percentile based categories (not using anymore, b/ doesn't work)
 # sand
-sa05 <- c("CLAY" = p05$CLAY, SILT = p05$SILT, SAND = 100 - p05$CLAY - p05$SILT)
+sa95 <- list("CLAY" = p50$CLAY, SAND = p95$SAND)
+sa95$SILT <- 100 - sa95$CLAY - sa95$SAND
 
 # silt
-si05 <- c("CLAY" = p05$CLAY, SILT = 100 - p05$SAND - p05$CLAY, SAND = p05$SAND)
+si95 <- list("CLAY" = p50$CLAY, SILT = p95$SILT)
+si95$SAND <- 100 - si95$CLAY - si95$SILT
 
 # clay
-cl05 <- c("CLAY" = 100 - p05$SAND - p05$SILT, "SILT" = p05$SILT, "SAND" = p05$SAND)
+cl95 <- list("CLAY" = p95$CLAY, SILT = p50$SILT)
+cl95$SAND <- 100 - cl95$CLAY - cl95$SILT
 
-# 4 soil texture classes
-foursoils <- bind_rows(sa05, si05, cl05) %>%
-  mutate(type = c("sand", "silt", "clay"))
-names(foursoils) <- str_extract(names(foursoils), "[A-z]+")
+soils95 <- bind_rows(sa95, si95, cl95)
 
-foursoils <- med %>%
-  bind_rows(foursoils) %>%
+third_class <- function(list) {
+  # sum rounded elements of list of length 2, subtract from 100
+  # ie calculating third texture class, based on list with 2 texture classes
+  stopifnot(length(list) ==2)
+  x <- sum(round(c(list[[1]], list[[2]])))
+  out <- 100 - x
+  out
+}
+
+# 95th with eyeballing the other two (issue w/ the above technique)
+# is that it doesn't allow for a good balance of the other soil classes
+# here just using a fixed percentile for the dominant class
+
+# previously clay set at 11
+sap <- list(SAND = p95$SAND)
+sap$CLAY <- conditional_texture(dt = data.table(df1[ ,c("SAND", "CLAY")]),
+                            x_conditional = p95$SAND, y_by = 0.1)
+sap$SILT <- third_class(sap)
+
+# silt:
+# previously sand set at 17
+sip <- list(SILT = p95$SILT)
+sip$CLAY <- conditional_texture(dt = data.table(df1[ ,c("SILT", "CLAY")]),
+                                x_conditional = p95$SILT, y_by = 0.1)
+sip$SAND <- third_class(sip)
+
+# clay
+# previously sand set at 30
+clp <- list(CLAY = p95$CLAY)
+clp$SAND <- conditional_texture(dt = data.table(df1[ ,c("CLAY", "SAND")]),
+                                x_conditional = p95$CLAY, y_by = 0.1)
+clp$SILT <- third_class(clp)
+
+
+soilsp <- bind_rows(sap, sip, clp, med) %>%
+  .[c("CLAY", "SILT", "SAND")] %>%
+  round() %>%
   as.data.frame()
+rowSums(soilsp) # need to be 100
 
 # figures -----------------------------------------------------------------
 
 geo <- TT.geo.get()
+# for contour plot
+kde.res <- TT.kde2d(
+  geo = geo,
+  tri.data = df1,
+  n = 100
+) #
 
 pdf("figures/soils/texture_triangles1.pdf")
 
@@ -117,8 +166,9 @@ pdf("figures/soils/texture_triangles1.pdf")
 TT.plot(
   class.sys = "USDA.TT",
   tri.data = df1,
-  cex = 0.2,
-  col = alpha("black", 0.01),
+  cex = .001,
+  pch = 1,
+  col = alpha("black", 0.05),
   frame.bg.col = "white",
   grid.show = FALSE,
   add = TRUE,
@@ -128,25 +178,20 @@ TT.plot(
 # adding 4 texture groups
 TT.points(
   geo = geo,
-  tri.data = foursoils,
+  tri.data = soilsp,
   col = "blue",
   pch = 3,
   cex = 3
 )
 
-# contour plot
-kde.res <- TT.kde2d(
-  geo = geo,
-  tri.data = df1,
-  n = 100
-) #
 
+# contour plot
 
 TT.contour(
   x = kde.res,
   geo = geo,
   main = "Probability density estimate of the texture data",
-  lwd = 1,
+  lwd = 0.5,
   col = "dark green"
 ) #
 #
@@ -159,10 +204,19 @@ TT.plot(
 )
 TT.points(
   geo = geo,
-  tri.data = foursoils,
+  tri.data = soilsp,
   col = "blue",
   pch = 3,
   cex = 3
 )
 
 dev.off()
+
+
+
+
+
+
+
+
+
