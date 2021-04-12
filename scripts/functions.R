@@ -139,3 +139,12 @@ conditional_texture <- function(dt, x_conditional, y_by = 0.1, x_step  = 1,
   expected <- weighted.mean(out$y, w = out$pdf)
   expected
 }
+
+
+# soil_name ---------------------------------------------------------------
+
+# for shortening the string provided in SoilTreatment column in stepwat
+# databases
+soil_name <- function(x) {
+  stringr::str_replace(x, "soils_", "")
+}
