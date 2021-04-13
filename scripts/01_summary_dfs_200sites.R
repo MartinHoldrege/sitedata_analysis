@@ -88,7 +88,7 @@ soil_mean0 <- bind_rows(sw2_yearly_slyrs_amb, sw2_yearly_slyrs_2x) %>%
 
 # long format
 soil_long0 <- soil_mean0 %>%
-  select(site, intensity, matches("_Mean")) %>%
+  select(site, intensity, SoilTreatment, matches("_Mean")) %>%
   pivot_longer(cols = matches("_Mean")) %>%
   mutate(layer = str_extract(name, "(?<=Lyr_)\\d"), # extracting layer
          name = str_replace(name, "_Lyr_\\d_Mean", ""), # removing layer from name
@@ -100,7 +100,7 @@ soil_long0 <- soil_mean0 %>%
 # dataframe with values broken down by plant functional types
 lyr_yr_PFT1 <- soil_long0 %>%
   filter(!is.na(PFT))%>%
-  pivot_wider(id_cols = c("site", "intensity", "layer", "PFT"),
+  pivot_wider(id_cols = c("site", "intensity", "layer", "PFT", "SoilTreatment"),
               names_from = "name",
               values_from = "value")
 
@@ -108,7 +108,7 @@ lyr_yr_PFT1 <- soil_long0 %>%
 lyr_yr_all1 <- soil_long0 %>%
   filter(is.na(PFT)| PFT == "total") %>%
   select(-PFT)%>%
-  pivot_wider(id_cols = c("site", "intensity", "layer"),
+  pivot_wider(id_cols = c("site", "intensity", "layer", "SoilTreatment"),
               names_from = "name",
               values_from = "value")
 
