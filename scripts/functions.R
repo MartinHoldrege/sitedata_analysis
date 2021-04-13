@@ -30,8 +30,6 @@ lyr2depth <- function(x) {
 intensity_lookup <- c("ambient" = "ambient",
                       "event 2x intensity" = "2x_intensity")
 
-
-
 # I want to collapse to the major groups I'm interested in
 
 
@@ -79,6 +77,9 @@ SG_lookup <-  c("sagebrush" = "total_shrub",
                "a.cool.grass" = "total_grass",
                "p.cool.grass" = "total_grass",
                "p.warm.grass" = "total_grass")
+
+
+# conditional_texture --------------------------------------------------------
 
 
 #' expected percent of one ofsand silt or clay given value of sand silt or clay
