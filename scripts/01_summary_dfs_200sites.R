@@ -81,7 +81,7 @@ dbDisconnect(db_2x)
 # means across years for each layer
 soil_mean0 <- bind_rows(sw2_yearly_slyrs_amb, sw2_yearly_slyrs_2x) %>%
   as_tibble() %>%
-  group_by(site, intensity) %>%
+  group_by(site, intensity, SoilTreatment) %>%
   summarise_at(.vars = vars(matches("_Lyr_\\d_Mean")),
                .funs = mean)
 
