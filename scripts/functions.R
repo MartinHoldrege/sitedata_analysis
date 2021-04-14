@@ -149,3 +149,19 @@ conditional_texture <- function(dt, x_conditional, y_by = 0.1, x_step  = 1,
 soil_name <- function(x) {
   stringr::str_replace(x, "soils_", "")
 }
+
+
+# calculate difference ----------------------------------------------------
+
+# meant to be used inside a grouped mutate statement
+
+calc_diff <- function(col, intensity) {
+  # difference between value and the value when intensity is ambient
+  col - col[intensity == "ambient"]
+}
+
+# calculating percent difference
+calc_perc_diff <- function(col, intensity) {
+  # difference between value and the value when intensity is ambient
+  (col - col[intensity == "ambient"])/col[intensity == "ambient"]*100
+}
