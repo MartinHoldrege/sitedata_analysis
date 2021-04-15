@@ -1,6 +1,6 @@
 # misc
 *.pdf
-
+*.jpg
 # History files
 .Rhistory
 .Rapp.history

@@ -11,7 +11,6 @@
 library(tidyverse)
 library(readr)
 source("scripts/functions.R")
-theme_set(theme_classic())
 
 # read in data ------------------------------------------------------------
 
@@ -86,7 +85,12 @@ bio_SGr_diff1 <- bio_SG1 %>%
   filter(intensity != "ambient")
 
 # figures -----------------------------------------------------------------
-
+theme_set(theme_classic())
+theme_update(strip.background = element_blank(),
+             strip.text = element_text(size = 17),
+             axis.title = element_text(size = 16),
+             # increasing right margin so numbers not cutoff
+             plot.margin = unit(c(5.5, 10, 5.5, 5.5), "points"))
 
 # * fig params ------------------------------------------------------------
 
@@ -120,7 +124,7 @@ g <- ggplot(bio_SG_diff1, aes(y = bio_diff)) +
 
 # s and g diff boxplot
 g +  geom_boxplot(aes(x = SG)) +
-  facet_wrap(~SoilTreatment) +
+  lemon::facet_rep_wrap(~SoilTreatment) +
   labs(x = PFT_lab,
        title = "Change in shrub and grass biomass")
 
@@ -128,10 +132,20 @@ g +  geom_boxplot(aes(x = SG)) +
 g +
   geom_point(aes(x = aridity_index)) +
   geom_smooth(aes(x = aridity_index), method = "loess", se = FALSE) +
-  facet_grid(SG~SoilTreatment, scales = "free_y") +
+  lemon::facet_rep_grid(SG~SoilTreatment, scales = "free_y") +
   labs(x = aridity_lab,
        title = "Shrub and grass sensitivity with aridity")
 
+bio_SG_diff1 %>%
+  filter(SoilTreatment == "loam") %>%
+  ggplot(aes(y = bio_diff)) +
+  labs(y = bio_diff_lab1) +
+  base()+
+  geom_point(aes(x = aridity_index)) +
+  geom_smooth(aes(x = aridity_index), method = "loess", se = FALSE) +
+  lemon::facet_rep_wrap(~SG, scales = "free_y", ncol = 1) +
+  labs(x = aridity_lab,
+       title = "Shrub and grass sensitivity with aridity, loam")
 
 # * SGr -------------------------------------------------------------------
 
@@ -150,7 +164,7 @@ g +
   geom_smooth(aes(x = aridity_index), method = "loess", se = FALSE) +
   labs(title = "Shrub:grass ratio sensitivity across aridity",
        x = aridity_lab) +
-  facet_wrap(~SoilTreatment)
+  lemon::facet_rep_wrap(~SoilTreatment)
 
 
 # * primary PFT diffs ------------------------------------------------------
@@ -171,7 +185,7 @@ g1 + geom_boxplot(aes(x = prime_PFT)) +
 # so can see different scales
 g1 + geom_boxplot() +
   clear_x() +
-  facet_grid(prime_PFT~SoilTreatment, scales = "free_y") +
+  lemon::facet_rep_grid(prime_PFT~SoilTreatment, scales = "free_y") +
   base() +
   labs(subtitle = "Note: scales differ")
 
@@ -179,7 +193,7 @@ g1 + geom_boxplot() +
 g +
   geom_point(aes(x = aridity_index), alpha = 0.3) +
   geom_smooth(aes(x = aridity_index), method = "loess", se = FALSE) +
-  facet_grid(prime_PFT~SoilTreatment, scales = "free_y") +
+  lemon::facet_rep_grid(prime_PFT~SoilTreatment, scales = "free_y") +
   labs(x = aridity_lab,
        title = "Biomass sensitivity with aridity by PFT",
        subtitle = "Note: scales differ")
