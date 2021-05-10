@@ -165,3 +165,34 @@ calc_perc_diff <- function(col, intensity) {
   # difference between value and the value when intensity is ambient
   (col - col[intensity == "ambient"])/col[intensity == "ambient"]*100
 }
+
+
+
+# query function ----------------------------------------------------------
+
+
+#' queries
+#'
+#' @description query multiple identical databases and combine, with new
+#' trmt columns added
+#'
+#' @param connections named list of db connections
+#' @param query string, sql query
+#' @return dataframe
+#' @export
+#'
+query_add_trmt <- function(connections, query) {
+
+  out <- map2_dfr(connections, names(connections), function(x, name) {
+
+    stopifnot(str_detect(name, "_"))
+
+    trmts <- unlist(str_split(name, "_")) # trmt labels extracted from name
+
+    dbGetQuery(x, query) %>%
+      mutate(intensity = trmts[1], # intensity trmt
+             # warming trmt
+             warm = trmts[2])
+  })
+  out
+}
