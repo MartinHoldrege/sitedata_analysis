@@ -9,3 +9,9 @@
 
 cols2 <-  c("ambient" = "#3182bd",
             "2x intensity" = "#bd0026")
+
+# colors for soil texture
+cols_text <- c("sand" = "#e41a1c",
+               "silt" = "#377eb8",
+               "clay" =  "#4daf4a",
+               "loam" = "black")

@@ -155,15 +155,16 @@ soil_name <- function(x) {
 
 # meant to be used inside a grouped mutate statement
 
-calc_diff <- function(col, intensity) {
-  # difference between value and the value when intensity is ambient
-  col - col[intensity == "ambient"]
+calc_diff <- function(col, intensity, warm) {
+  # difference between value and the value when intensity and temp is ambient
+  col - col[intensity == "ambient" & warm == "ambient"]
 }
 
 # calculating percent difference
-calc_perc_diff <- function(col, intensity) {
+calc_perc_diff <- function(col, intensity, warm) {
   # difference between value and the value when intensity is ambient
-  (col - col[intensity == "ambient"])/col[intensity == "ambient"]*100
+  (col - col[intensity == "ambient" & warm == "ambient"])/
+    col[intensity == "ambient" & warm == "ambient"]*100
 }
 
 
@@ -194,5 +195,43 @@ query_add_trmt <- function(connections, query) {
              # warming trmt
              warm = trmts[2])
   })
+  out
+}
+
+
+
+# trmts2factors -----------------------------------------------------------
+
+#' treatment character columns into factors
+#'
+#' @param df dataframe with warm, intensity and soiltreatment columns
+#'
+#' @return dataframe with treatment columns converted to ordered factors
+#' @export
+trmts2factors <- function(df) {
+  stopifnot(
+    c("SoilTreatment", "warm", "intensity") %in% names(df)
+  )
+
+  warm_levels <- c("ambient", "3C")
+  warm_labels = c("ambient", "3C warming")
+
+  # adjusting function so it can adapt to new simulations with a 5C treatment
+  if("5C" %in% unique(df$warm)) {
+    warm_levels <- c(warm_levels, "5C")
+    warm_labels <- c(warm_labels, "5C warming")
+  }
+
+  out <- df %>%
+    mutate(SoilTreatment = factor(.data$SoilTreatment,
+                                  levels = c("sand", "silt", "clay", "loam")),
+           intensity = factor(.data$intensity,
+                             levels = c("ambient", "1.25x intensity",
+                                        "1.5x intensity", "2x intensity")),
+
+           warm = factor(.data$warm,
+                         levels = warm_levels,
+                         labels = warm_labels)
+           )
   out
 }

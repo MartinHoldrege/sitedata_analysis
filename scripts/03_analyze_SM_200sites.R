@@ -25,6 +25,7 @@ lyr_all1 <- read_csv("data-processed/site_means/yr_mean_by_lyr-all_v1.csv")
 
 # yearly soilwat2 output, not by layer
 all1 <- read_csv("data-processed/site_means/sw2_yr_means_v1.csv")
+
 # summary dfs -------------------------------------------------------------
 
 aridity1 <- aridity1 %>%
@@ -32,18 +33,23 @@ aridity1 <- aridity1 %>%
 
 lyr_all1 <- lyr_all1 %>%
   mutate(SoilTreatment = soil_name(SoilTreatment),
-         depth = lyr2depth(layer))
+         depth = lyr2depth(layer)) %>%
+  trmts2factors()
+
 
 lyr_pft1 <- lyr_pft1 %>%
   filter(PFT != "tree") %>% # no trees being modeled
   mutate(SoilTreatment = soil_name(SoilTreatment),
-         depth = lyr2depth(layer))
+         depth = lyr2depth(layer))%>%
+  trmts2factors()
+
 
 all2 <- all1 %>%
   mutate(SoilTreatment = soil_name(SoilTreatment)) %>%
   rename(EVAPSURFACE = EVAPSURFACE_evap_total_Mean,
          drain = DEEPSWC_lowLayerDrain_cm_Mean) %>%
-  select(site, SoilTreatment, intensity, EVAPSURFACE, drain)
+  select(site, SoilTreatment, intensity, warm, EVAPSURFACE, drain) %>%
+  trmts2factors()
 
 
 # * total transp ---------------------------------------------------------
@@ -53,40 +59,43 @@ all2 <- all1 %>%
 # total transpiration (to provide a total transpiration across layers)
 tot_transp <- lyr_all1 %>%
   # later group by SoilTreatment when appropriate
-  group_by(site, intensity, SoilTreatment) %>%
+  group_by(site, intensity, warm, SoilTreatment) %>%
   summarize(TRANSP = sum(TRANSP),
             EVAPSOIL = sum(EVAPSOIL, na.rm = TRUE),
             .groups = "drop") %>%
   left_join(aridity1, by = "site") %>%
-  left_join(all2, by = c("site", "intensity", "SoilTreatment")) %>%
+  left_join(all2, by = c("site", "intensity", "warm", "SoilTreatment")) %>%
   # total evaporation
   mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE)
 
-# diff and % diff between intensity and ambient
+# diff and % diff between a given treatment and ambient intensity and warming
+# consider also calculate difference between trmt and ambient intensity
+# and level of warming of that trmt.
 tot_transp_diff <- tot_transp %>%
   group_by(site, SoilTreatment) %>%
   mutate_at(.vars = c("TRANSP", "EVAPTOT", "drain"),
             .funs = list(diff = calc_diff, perc_diff = calc_perc_diff),
             # argument to be passed to funs:
-            intensity = quote(intensity)) %>%
+            intensity = quote(intensity),
+            warm = quote(warm)) %>%
   # diffs for ambient are 0
-  filter(intensity != "ambient")
+  filter(!(intensity == "ambient" & warm == "ambient"))
 
 # ** by pft ---------------------------------------------------------------
 
 tot_transp_pft <- lyr_pft1 %>%
   # later group by SoilTreatment when appropriate
-  group_by(site, intensity, SoilTreatment, PFT) %>%
+  group_by(site, intensity, warm, SoilTreatment, PFT) %>%
   summarize(TRANSP = sum(TRANSP), .groups = "drop") %>%
   left_join(aridity1, by = "site")
 
 # diff between intensity and ambient
 tot_transp_pft_diff <- tot_transp_pft %>%
   group_by(site, SoilTreatment, PFT) %>%
-  mutate(TRANSP_diff = calc_diff(TRANSP, intensity),
-         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity)) %>%
+  mutate(TRANSP_diff = calc_diff(TRANSP, intensity, warm),
+         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity, warm)) %>%
   # diffs for ambient are 0
-  filter(intensity != "ambient")
+  filter(!(intensity == "ambient" & warm == "ambient"))
 
 # * differences by depth -------------------------------------------------
 
@@ -95,58 +104,66 @@ tot_transp_pft_diff <- tot_transp_pft %>%
 # this way of calculating differences allows for including
 # of more intensity levels down the road
 lyr_all_diff1 <- lyr_all1 %>%
-  select(site, intensity, depth, SoilTreatment, VWCMATRIC, WETDAY, TRANSP) %>%
+  select(site, intensity, warm, depth, SoilTreatment, VWCMATRIC, WETDAY,
+         TRANSP) %>%
   group_by(site, depth, SoilTreatment) %>%
-  mutate(VWC_diff = calc_diff(VWCMATRIC, intensity),
-         WETDAY_diff = calc_diff(WETDAY, intensity),
-         TRANSP_diff = calc_diff(TRANSP, intensity),
-         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity)) %>%
-  filter(intensity != "ambient") %>%
+  mutate(VWC_diff = calc_diff(VWCMATRIC, intensity, warm),
+         WETDAY_diff = calc_diff(WETDAY, intensity, warm),
+         TRANSP_diff = calc_diff(TRANSP, intensity, warm),
+         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity, warm)) %>%
+  filter(!(intensity == "ambient" & warm == "ambient")) %>%
   left_join(aridity1, by = "site")
 
 # diffs by pft (total is a pft category)
 lyr_pft_diff1 <- lyr_pft1 %>%
-  select(site, intensity, depth, SoilTreatment, PFT, TRANSP) %>%
+  select(site, intensity, warm, depth, SoilTreatment, PFT, TRANSP) %>%
   group_by(site, depth, PFT, SoilTreatment) %>%
-  mutate(TRANSP_diff = calc_diff(TRANSP, intensity),
-         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity)) %>%
-  filter(intensity != "ambient") %>%
+  mutate(TRANSP_diff = calc_diff(TRANSP, intensity, warm),
+         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity, warm)) %>%
+  filter(!(intensity == "ambient" & warm == "ambient")) %>%
   left_join(aridity1, by = "site")
 
 # figures -----------------------------------------------------------------
 
 theme_set(theme_classic())
 theme_update(strip.background = element_blank(),
-             strip.text = element_text(size = 17),
-             axis.title = element_text(size = 16),
+             strip.text = element_text(size = 12),
+             axis.title = element_text(size = 13),
              # increasing right margin so numbers not cutoff
              plot.margin = unit(c(5.5, 10, 5.5, 5.5), "points"))
 
 # * fig params ------------------------------------------------------------
 
 caption <- paste("STEPWAT2 run for 200 sites.",
-                 "PPT intensity doubled by adjusting markov coefficients.")
-transp_lab1 <- "Transpiration difference (2x intensity - ambient; cm)"
-transp_lab2 <- "% transpiration change"
+                 "PPT intensity and warming manipulated by adjusting",
+                 "markov coefficients.",
+                 "\nControl is ambient intensity and ambient warming")
+
+transp_lab1 <- "Transpiration difference (trmt - control; cm)"
+Stepwattransp_lab2 <- "% transpiration change"
 
 se = FALSE # confidence interval
 
 # these labels will need to be adjusted once no longer just 2x intensity
-vwc_lab1 <- "VWC difference (2x intensity - ambient; cm/cm)"
+vwc_lab1 <- "VWC difference (trmt - control; cm/cm)"
 depth_lab  <- "Soil depth (cm)"
-wetday_lab1 <- "Wet day difference (2x intensity - ambient; # days > -1.5 MPa)"
+wetday_lab1 <- "Wet day difference (trmt - control; # days > -1.5 MPa)"
 aridity_lab <- "Aridity index (MAP/PET)"
 
-evap_lab1 <- "Evaporation difference (2x intensity - ambient; cm)"
+evap_lab1 <- "Evaporation difference (trmt - control; cm)"
 evap_lab2 <- "% evaporation change"
 
-drain_lab1 <- "deep drainage difference (2x intensity - ambient; cm)"
+drain_lab1 <- "deep drainage difference (trmt - control; cm)"
 drain_lab2 <- "% deep drainage change"
 
+perc_sub <-"% change in transpiration (trmt vs control) across soil layers"
+
 lab_fun1 <- function(x) {
-  paste("% change in", x, "(2x intensity vs ambient)",
+  paste("% change in", x, "(trmt vs ambient)",
         "vs aridity")
 }
+fgs <- c("forbs", "grass", "shrub")
+
 # base of figures by soil layers
 lyr_base <- function() {
   list(stat_summary(fun = mean, geom = "line", color = "blue"),
@@ -189,28 +206,41 @@ box_and_line <- function(g) {
   list(g1, g2)
 }
 
+texture_legend <- function() {
+  list(scale_color_manual(values = cols_text),
+       theme(legend.title = element_blank(),
+            legend.position = "top")
+       )
+}
+
+
 # * sm sum across lyrs ----------------------------------------------------
 
-pdf("figures/soil_moisture/SM_across_lyrs_v1.pdf")
+pdf("figures/soil_moisture/SM_across_lyrs_v2.pdf")
 # soil moisture across layers (ie transpiration or other cumulative metrics)
 
 
 # * * transpiration -------------------------------------------------------
 
-perc_sub <-"% change in transpiration (2x intensity vs ambient) across soil layers"
 
-ggplot(tot_transp_diff, aes(x = SoilTreatment, y = TRANSP_diff)) +
+ggplot(tot_transp_diff, aes(x = SoilTreatment, y = TRANSP_diff,
+                            color = SoilTreatment)) +
   geom_boxplot() +
 #  geom_rug(color = "red") +
   labs(y = transp_lab1,
-       title = "Intensity effect on total transpiration across soil layers",
-       caption = caption)
+       title = "Intensity and warming effect on total transpiration across soil layers",
+       caption = caption) +
+  lemon::facet_rep_grid(warm~intensity) +
+  scale_color_manual(values = cols_text) +
+  theme(legend.position = "none")
 
-g <- ggplot(tot_transp_diff) +
+g <- ggplot(tot_transp_diff,
+            aes(color = SoilTreatment, group = SoilTreatment)) +
   geom_hline(yintercept = 0, linetype = 2) +
-  lemon::facet_rep_wrap(~SoilTreatment) +
+  lemon::facet_rep_grid(intensity~warm) +
   labs(x = aridity_lab,
-       caption = caption)
+       caption = caption) +
+  texture_legend()
 
 # difference
 g +
@@ -247,29 +277,38 @@ g +
        subtitle = paste(perc_sub, "vs Tmax"))
 
 # % change vs MAP by PFT
-g2 <- ggplot() +
-  geom_hline(yintercept = 0, linetype = 2) +
+g2 <- function(data) {
+  ggplot(data, aes(x = aridity_index, color = SoilTreatment)) +
+    geom_hline(yintercept = 0, linetype = 2) +
     labs(x = aridity_lab,
-       y = transp_lab2,
-       caption = caption)
-g2 +
-  geom_point(data = tot_transp_pft_diff,
-             aes(aridity_index, y = TRANSP_perc_diff)) +
-  geom_smooth(data = tot_transp_pft_diff,
-              aes(aridity_index, y = TRANSP_perc_diff), method = "loess",
-              se = se) +
-  labs(subtitle = paste(perc_sub, "vs aridity, by PFT")) +
-  lemon::facet_rep_grid(SoilTreatment~PFT)
+         y = transp_lab2,
+         caption = caption) +
+    texture_legend()
+}
 
-# just showing loam, for presentation
-g2 +
-  geom_point(data = filter(tot_transp_pft_diff, SoilTreatment == "loam"),
-             aes(aridity_index, y = TRANSP_perc_diff)) +
-  geom_smooth(data = filter(tot_transp_pft_diff, SoilTreatment == "loam"),
-              aes(aridity_index, y = TRANSP_perc_diff), method = "loess",
-              se = se) +
-  labs(subtitle = paste(perc_sub, "\nvs aridity, by PFT, loam soil")) +
-  lemon::facet_rep_wrap(~PFT)
+
+# transp--all pfts same page
+g2(tot_transp_pft_diff) +
+  geom_point(aes(y = TRANSP_perc_diff)) +
+  geom_smooth(aes(y = TRANSP_perc_diff),
+              method = "loess", se = se) +
+  labs(subtitle = paste(perc_sub, "vs aridity, by PFT")) +
+  facet_grid(warm + intensity ~ PFT) +
+  theme(strip.text.y.right = element_text(angle = 0))
+
+# transp--pfts by page
+map(fgs, function(x) {
+  print(x)
+  tot_transp_pft_diff %>%
+    filter(PFT == x) %>%
+    g2()  +
+    geom_point(aes(y = TRANSP_perc_diff)) +
+    geom_smooth(aes(y = TRANSP_perc_diff),
+                method = "loess", se = se) +
+    labs(subtitle = paste(perc_sub, "vs aridity"),
+         title = x) +
+    lemon::facet_rep_grid(warm ~ intensity)
+})
 
 
 # ** drainage --------------------------------------------------------------
@@ -278,7 +317,7 @@ g +
   geom_smooth(aes(x = aridity_index, y = drain_diff), method = "loess",
               se = se) +
   labs(y = drain_lab1,
-       title = "Deep drainage difference across vs aridity")
+       title = "Deep drainage difference vs aridity")
 
 # % change
 g +
@@ -309,7 +348,7 @@ dev.off()
 
 # ** jpegs ----------------------------------------------------------------
 jpeg2 <- function(x,...){
-  jpeg(filename = x, height = 4, width = 6, res = 600, units = "in",...)
+  jpeg(filename = x, height = 8, width = 10, res = 600, units = "in",...)
 }
 
 g <- ggplot(filter(tot_transp_diff, SoilTreatment == "loam")) +
@@ -317,24 +356,43 @@ g <- ggplot(filter(tot_transp_diff, SoilTreatment == "loam")) +
   labs(x = aridity_lab)
 
 # % change
-jpeg2("figures/soil_moisture/tot_transp_diff_v1.jpg")
+jpeg2("figures/soil_moisture/tot_transp_diff_v2.jpg")
 
 g +
   geom_point(aes(aridity_index, y = TRANSP_perc_diff)) +
   geom_smooth(aes(aridity_index, y = TRANSP_perc_diff), method = "loess",
               se = se) +
-  labs(y = transp_lab2)
+  labs(y = transp_lab2) +
+  lemon::facet_rep_wrap(~intensity + warm)
 
 dev.off()
 
 # * SM by lyrs across PFT ---------------------------------------------------
 
-pdf("figures/soil_moisture/SM_by_lyr_across_PFT_v1.pdf")
+pdf("figures/soil_moisture/SM_by_lyr_across_PFT_v2.pdf")
 
 # ** VWC ------------------------------------------------------------------
+
+
+# STOP CONTINUE HERE
+
+# next steps--create the boxplot figure, then create seperate figure
+# with just means (dotplot)
+# also move x axis to top
+
+
 g <- ggplot(lyr_all_diff1, aes(x = -depth, y = VWC_diff)) +
   labs(y = vwc_lab1,
        title = "Intensity effect on volumetric water content")
+ggplot(lyr_all_diff1, aes(x = as.factor(-depth), y = VWC_diff,
+                          fill = SoilTreatment, color = SoilTreatment)) +
+  labs(y = vwc_lab1,
+       title = "Intensity effect on volumetric water content") +
+  #texture_legend()+
+  lemon::facet_rep_grid(intensity~warm) +
+  geom_boxplot(position = "dodge2") +
+  coord_flip()
+
 
 box_and_line(g)
 
