@@ -4,7 +4,7 @@
 
 # Purpose is to summarize soil moisture data (means of yearly values)
 # Create descriptive stats of ambient and increased intensity and warming
-# The basic soil moisture summary datafiles used here were generated in
+# The basic soil moisture summary data files used here were generated in
 # 01_summary_dfs_200sites.R
 
 # dependencies ------------------------------------------------------------

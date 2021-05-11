@@ -23,6 +23,16 @@ lyr2depth <- function(x) {
 }
 
 
+# depth2cm ----------------------------------------------------------------
+
+# lookup function for ggplot facet labelling
+
+depth2cm <- function() {
+  depths <- lyr2depth(1:8)
+  lookup <- paste(depths, "cm")
+  names(lookup) <- depths
+  lookup
+}
 
 # lookup vectors ----------------------------------------------------------
 
