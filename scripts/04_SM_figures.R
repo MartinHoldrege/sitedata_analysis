@@ -1,127 +1,15 @@
 # Martin Holdrege
 
-# Script start 4/13/21
+# script started 5/11/21 (figures previously in 03_analyze_SM_200sites.R)
 
-# Purpose is to summarize soil moisture data (means of yearly values)
-# Use descriptive stats/figures to compare ambient and increased intensity
+# Purpose is to create figures of soil water availability soilwat2 output
+# Examines water use etc. across treatments (intensity and warming), depth,
+# soil type, and functional type.
 
 # dependencies ------------------------------------------------------------
 
-library(tidyverse)
-source("scripts/functions.R")
+source("scripts/03_SM_summarize.R")
 source("scripts/fig_params.R")
-
-# read in data ------------------------------------------------------------
-
-# aridity
-aridity1 <- read_csv("data-processed/aridity_by_site.csv")
-
-# soil moisture metrics by PFT and layer
-lyr_pft1 <- read_csv("data-processed/site_means/yr_mean_by_lyr-PFT_v1.csv")
-
-
-# soil moisture metrics by layer, (not by PFT)
-lyr_all1 <- read_csv("data-processed/site_means/yr_mean_by_lyr-all_v1.csv")
-
-# yearly soilwat2 output, not by layer
-all1 <- read_csv("data-processed/site_means/sw2_yr_means_v1.csv")
-
-# summary dfs -------------------------------------------------------------
-
-aridity1 <- aridity1 %>%
-  select(-matches("_SD$"))
-
-lyr_all1 <- lyr_all1 %>%
-  mutate(SoilTreatment = soil_name(SoilTreatment),
-         depth = lyr2depth(layer)) %>%
-  trmts2factors()
-
-
-lyr_pft1 <- lyr_pft1 %>%
-  filter(PFT != "tree") %>% # no trees being modeled
-  mutate(SoilTreatment = soil_name(SoilTreatment),
-         depth = lyr2depth(layer))%>%
-  trmts2factors()
-
-
-all2 <- all1 %>%
-  mutate(SoilTreatment = soil_name(SoilTreatment)) %>%
-  rename(EVAPSURFACE = EVAPSURFACE_evap_total_Mean,
-         drain = DEEPSWC_lowLayerDrain_cm_Mean) %>%
-  select(site, SoilTreatment, intensity, warm, EVAPSURFACE, drain) %>%
-  trmts2factors()
-
-
-# * total transp ---------------------------------------------------------
-
-# ** across pfts ----------------------------------------------------------
-
-# total transpiration (to provide a total transpiration across layers)
-tot_transp <- lyr_all1 %>%
-  # later group by SoilTreatment when appropriate
-  group_by(site, intensity, warm, SoilTreatment) %>%
-  summarize(TRANSP = sum(TRANSP),
-            EVAPSOIL = sum(EVAPSOIL, na.rm = TRUE),
-            .groups = "drop") %>%
-  left_join(aridity1, by = "site") %>%
-  left_join(all2, by = c("site", "intensity", "warm", "SoilTreatment")) %>%
-  # total evaporation
-  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE)
-
-# diff and % diff between a given treatment and ambient intensity and warming
-# consider also calculate difference between trmt and ambient intensity
-# and level of warming of that trmt.
-tot_transp_diff <- tot_transp %>%
-  group_by(site, SoilTreatment) %>%
-  mutate_at(.vars = c("TRANSP", "EVAPTOT", "drain"),
-            .funs = list(diff = calc_diff, perc_diff = calc_perc_diff),
-            # argument to be passed to funs:
-            intensity = quote(intensity),
-            warm = quote(warm)) %>%
-  # diffs for ambient are 0
-  filter(!(intensity == "ambient" & warm == "ambient"))
-
-# ** by pft ---------------------------------------------------------------
-
-tot_transp_pft <- lyr_pft1 %>%
-  # later group by SoilTreatment when appropriate
-  group_by(site, intensity, warm, SoilTreatment, PFT) %>%
-  summarize(TRANSP = sum(TRANSP), .groups = "drop") %>%
-  left_join(aridity1, by = "site")
-
-# diff between intensity and ambient
-tot_transp_pft_diff <- tot_transp_pft %>%
-  group_by(site, SoilTreatment, PFT) %>%
-  mutate(TRANSP_diff = calc_diff(TRANSP, intensity, warm),
-         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity, warm)) %>%
-  # diffs for ambient are 0
-  filter(!(intensity == "ambient" & warm == "ambient"))
-
-# * differences by depth -------------------------------------------------
-
-# across all PFTs
-# note: VWCBULK and VWCMATRIC look identical (1:1 line)
-# this way of calculating differences allows for including
-# of more intensity levels down the road
-lyr_all_diff1 <- lyr_all1 %>%
-  select(site, intensity, warm, depth, SoilTreatment, VWCMATRIC, WETDAY,
-         TRANSP) %>%
-  group_by(site, depth, SoilTreatment) %>%
-  mutate(VWC_diff = calc_diff(VWCMATRIC, intensity, warm),
-         WETDAY_diff = calc_diff(WETDAY, intensity, warm),
-         TRANSP_diff = calc_diff(TRANSP, intensity, warm),
-         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity, warm)) %>%
-  filter(!(intensity == "ambient" & warm == "ambient")) %>%
-  left_join(aridity1, by = "site")
-
-# diffs by pft (total is a pft category)
-lyr_pft_diff1 <- lyr_pft1 %>%
-  select(site, intensity, warm, depth, SoilTreatment, PFT, TRANSP) %>%
-  group_by(site, depth, PFT, SoilTreatment) %>%
-  mutate(TRANSP_diff = calc_diff(TRANSP, intensity, warm),
-         TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity, warm)) %>%
-  filter(!(intensity == "ambient" & warm == "ambient")) %>%
-  left_join(aridity1, by = "site")
 
 # figures -----------------------------------------------------------------
 
@@ -170,9 +58,9 @@ lyr_base <- function() {
        stat_summary(fun = mean, geom = "point", color = "blue"),
        geom_hline(yintercept = 0, linetype = 2, alpha = 0.7),
        labs(x = depth_lab,
-           caption = caption),
+            caption = caption),
        xlim(c(-155, 0)),
-      coord_flip()
+       coord_flip()
   )
 }
 
@@ -194,7 +82,7 @@ aridity_base <- function() {
        labs(x = aridity_lab,
             caption = caption,
             subtitle = "Soil depths (cm) shown in separate panels")
-       )
+  )
 }
 
 # create both boxplot and line graphs
@@ -209,8 +97,8 @@ box_and_line <- function(g) {
 texture_legend <- function() {
   list(scale_color_manual(values = cols_text),
        theme(legend.title = element_blank(),
-            legend.position = "top")
-       )
+             legend.position = "top")
+  )
 }
 
 
@@ -226,7 +114,7 @@ pdf("figures/soil_moisture/SM_across_lyrs_v2.pdf")
 ggplot(tot_transp_diff, aes(x = SoilTreatment, y = TRANSP_diff,
                             color = SoilTreatment)) +
   geom_boxplot() +
-#  geom_rug(color = "red") +
+  #  geom_rug(color = "red") +
   labs(y = transp_lab1,
        title = "Intensity and warming effect on total transpiration across soil layers",
        caption = caption) +
@@ -440,7 +328,7 @@ ggplot(lyr_all_diff1, aes(y = TRANSP_perc_diff)) +
        title = "% change in transpiration vs aridity") +
   aridity_base() +
   scale_y_continuous(#breaks = c(0, 100),
-                     minor_breaks = seq(from = -50, to = 200, by = 50))
+    minor_breaks = seq(from = -50, to = 200, by = 50))
 
 dev.off()
 
@@ -450,7 +338,7 @@ dev.off()
 jpeg2("figures/soil_moisture/box_perc_transp_loam.jpg")
 lyr_all_diff1 %>%
   filter(SoilTreatment == "loam") %>%
-ggplot(aes(x = -depth, y = TRANSP_perc_diff)) +
+  ggplot(aes(x = -depth, y = TRANSP_perc_diff)) +
   boxplot_base() + lyr_base() +
   labs(title = NULL,
        subtitle = NULL,
