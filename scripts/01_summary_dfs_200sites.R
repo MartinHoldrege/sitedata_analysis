@@ -15,15 +15,11 @@ theme_set(theme_classic())
 
 # file paths --------------------------------------------------------------
 
-# kg1 directory should mounted
-
-# this code added so that it will but on cluster and pc
-
 sitedata_dir <- "../sitedata"
 
 # connect to db's ---------------------------------------------------------
 
-# names are intensity_warming treatment
+# names are intensity_warming treatment (parsed later)
 db_paths <- c(
   "ambient_ambient" = "20210323_ambient_200sites/Output_Compiled_ambient.sqlite",
   "2x intensity_ambient" = "20210412_2x_200sites/Output_Compiled_2x.sqlite",
@@ -32,7 +28,11 @@ db_paths <- c(
   "ambient_3C" = "20210506_ambient_3C_200sites/Output_Compiled_ambient_3C.sqlite",
   "2x intensity_3C" = "20210507_2x_3C_200sites/Output_Compiled_2x_3C.sqlite",
   "1.5x intensity_3C" = "20210507_1.5x_3C_200sites/Output_Compiled_1.5x_3C.sqlite",
-  "1.25x intensity_3C" = "20210509_1.25x_3C_200sites/Output_Compiled_1.25_3C.sqlite"
+  "1.25x intensity_3C" = "20210509_1.25x_3C_200sites/Output_Compiled_1.25_3C.sqlite",
+  "ambient_5C" = "20210512_ambient_5C_200sites/Output_Compiled_ambient_5C.sqlite",
+  "2x intensity_5C" = "20210510_2x_5C_200sites/Output_Compiled_2x_5C.sqlite",
+  "1.5x intensity_5C" = "20210511_1.5x_5C_200sites/Output_Compiled_1.5x_5C.sqlite",
+  "1.25x intensity_5C" = "20210511_1.25x_5C_200sites/Output_Compiled_1.25_5C.sqlite"
 )
 
 db_connects <- map(db_paths, function(x) {
