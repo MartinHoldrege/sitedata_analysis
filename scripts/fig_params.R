@@ -7,13 +7,14 @@
 
 # colors ------------------------------------------------------------------
 
-cols2 <-  c("ambient" = "#3182bd",
-            "2x intensity" = "#bd0026")
-
 # colors for soil texture
 cols_text <- c("sand" = "#e41a1c",
                "silt" = "#377eb8",
                "clay" =  "#4daf4a",
                "loam" = "black")
 
-
+# colors for precipitation intensity
+cols_intensity <- c("ambient" = "black",
+                    "1.25x intensity" = "#fdcc8a",
+                    "1.5x intensity" = "#fc8d59",
+                    "2x intensity" = "#d7301f")

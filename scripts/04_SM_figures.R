@@ -21,6 +21,9 @@ theme_update(strip.background = element_blank(),
              plot.margin = unit(c(5.5, 10, 5.5, 5.5), "points"))
 
 # fig params ------------------------------------------------------------
+# dimensions of pdf pages (in)
+width = 8
+height = 7
 
 caption <- paste("STEPWAT2 run for 200 sites.",
                  "PPT intensity and warming manipulated by adjusting",
@@ -80,7 +83,7 @@ boxplot_base <- function() {
 }
 
 
-aridity_base <- function(scales = "fixed") {
+aridity_base <- function(scales = "fixed", strip_size = 9) {
   list(geom_hline(yintercept = 0, alpha = 0.7, linetype = 2),
        geom_point(aes(x = aridity_index, color = SoilTreatment),
                   alpha = 0.3, size = 0.5),
@@ -93,7 +96,7 @@ aridity_base <- function(scales = "fixed") {
        # fewer breaks (small figs)
        scale_x_continuous(breaks = c(0.4, 0.8)),
        # small text to fit all plot in
-       theme(strip.text = element_text(size = 9)),
+       theme(strip.text = element_text(size = strip_size)),
        labs(x = aridity_lab,
             caption = caption,
             subtitle = "Soil depths plotted seperately")
@@ -121,13 +124,16 @@ texture_legend <- function() {
 # sm sum across lyrs ----------------------------------------------------
 
 # soil moisture across layers (ie transpiration or other cumulative metrics)
-pdf("figures/soil_moisture/SM_across_lyrs_v2.pdf")
+pdf("figures/soil_moisture/SM_across_lyrs_v3.pdf",
+    width = width,
+    height = height)
 
 # * transpiration -------------------------------------------------------
 
 
 ggplot(tot_transp_diff, aes(x = SoilTreatment, y = TRANSP_diff,
                             color = SoilTreatment)) +
+  geom_hline(yintercept = 0, linetype = 2) +
   geom_boxplot() +
   #  geom_rug(color = "red") +
   labs(y = transp_lab1,
@@ -210,7 +216,7 @@ map(fgs, function(x) {
                 method = "loess", se = se) +
     labs(subtitle = paste(perc_sub, "vs aridity"),
          title = x) +
-    lemon::facet_rep_grid(warm ~ intensity)
+    lemon::facet_rep_grid(intensity~warm)
 })
 
 
@@ -272,7 +278,9 @@ dev.off()
 
 # SM by lyrs across PFT ---------------------------------------------------
 
-pdf("figures/soil_moisture/SM_by_lyr_across_PFT_v2.pdf")
+pdf("figures/soil_moisture/SM_by_lyr_across_PFT_v3.pdf",
+    width = width,
+    height = height)
 
 # * VWC ------------------------------------------------------------------
 
@@ -288,7 +296,7 @@ g +
 
 # trmt*depth panels
 ggplot(lyr_all_diff1, aes(y = VWC_diff)) +
-  aridity_base() +
+  aridity_base(strip_size = 7) +
   labs(y = vwc_lab1,
        title = "Change in volumetric water content vs. aridity") +
   scale_y_continuous(breaks = c(-0.02, 0, 0.02))
@@ -310,7 +318,7 @@ g +
 ggplot(lyr_all_diff1, aes(y = WETDAY_diff)) +
   labs(y = wetday_lab1,
        title = "Change in number of wet days vs. aridity") +
-  aridity_base() +
+  aridity_base(strip_size = 7) +
   scale_y_continuous(breaks = c(-50, 0, 50))
 
 
@@ -333,10 +341,10 @@ g2 <- ggplot(lyr_all_diff1, aes(y = TRANSP_diff)) +
        title = "Change in total transpiration by layer vs. aridity")
 
 g2 +
-  aridity_base()
+  aridity_base(strip_size = 7)
 
 g2 +
-  aridity_base(scales = "free_y")
+  aridity_base(scales = "free_y", strip_size = 7)
 
 # * % change transpiration ------------------------------------------------
 
@@ -357,17 +365,19 @@ g2 <- ggplot(lyr_all_diff1, aes(y = TRANSP_perc_diff)) +
        title = "Change in % transpiration by layer vs. aridity")
 
 g2 +
-  aridity_base()
+  aridity_base(strip_size = 7)
 
 g2 +
-  aridity_base(scales = "free_y")
+  aridity_base(scales = "free_y", strip_size = 7)
 
 dev.off()
 
 
 # transp by lyrs and PFT ------------------------------------------------
 
-pdf("figures/soil_moisture/transp_by_lyr-PFT_v2.pdf")
+pdf("figures/soil_moisture/transp_by_lyr-PFT_v3.pdf",
+    width = width,
+    height = height)
 
 # * transpiration change -------------------------------------------------
 
@@ -393,10 +403,10 @@ transp_l1 <- map(fgs, function(x) {
          title = paste0(x, "--change in transpiration vs. aridity"))
 
   out3 <- g2 +
-    aridity_base()
+    aridity_base(strip_size = 7)
 
   out4 <- g2 +
-    aridity_base(scales = "free_y")
+    aridity_base(scales = "free_y", strip_size = 7)
 
   list(out1, out2, out3, out4)
 })
@@ -435,10 +445,10 @@ transp_l2 <- map(fgs, function(x) {
          title = paste0(x, "--% transpiration change vs. aridity"))
 
   out3 <- g2 +
-    aridity_base()
+    aridity_base(strip_size = 7)
 
   out4 <- g2 +
-    aridity_base(scales = "free_y")
+    aridity_base(scales = "free_y", strip_size = 7)
 
   list(out1, out2, out3, out4)
 })
