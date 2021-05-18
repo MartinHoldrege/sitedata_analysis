@@ -18,3 +18,4 @@ cols_intensity <- c("ambient" = "black",
                     "1.25x intensity" = "#fdcc8a",
                     "1.5x intensity" = "#fc8d59",
                     "2x intensity" = "#d7301f")
+
