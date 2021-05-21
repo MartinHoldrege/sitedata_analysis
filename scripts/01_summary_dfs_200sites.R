@@ -142,7 +142,10 @@ sw2_dly1 <- sw2_dly0 %>%
   as_tibble() %>%
   mutate(SoilTreatment = soil_name(SoilTreatment)) %>%
   select(site, intensity, warm, SoilTreatment, Day,
-         matches("_Mean$|^PRECIP_ppt_|^Temp_(max|min)_C"))
+         matches("_Mean$|^PRECIP_ppt_|^Temp_(max|min)_C")) %>%
+  # at the moment my laptop doesn't have the memory to work with the whole
+  # file so just looking at loam
+  filter(SoilTreatment == "loam")
 
 # BIOMASS summaries ----------------------------------------------------
 
