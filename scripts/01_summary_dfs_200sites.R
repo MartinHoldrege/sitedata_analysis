@@ -75,6 +75,14 @@ q3 <- paste("SELECT *",
 # (it just has the value 24)
 sw2_yrly0 <- query_add_trmt(db_connects, q3)
 
+# sw2_daily
+# mean values for each day of year across years and iterations
+q4 <- paste("SELECT *",
+            "FROM sw2_daily",
+            "WHERE GCM = 'Current'")
+
+sw2_dly0 <- query_add_trmt(db_connects, q4)
+
 walk(db_connects, dbDisconnect) # disconnect from databases
 
 # sw2_yearly_slyrs summaries ----------------------------------------------
@@ -127,6 +135,15 @@ sw2_yrly1 <- sw2_yrly0 %>%
                .funs = mean)
 
 
+# sw2_daily summaries -----------------------------------------------------
+
+# already means across iterations and years so no actually summarizing
+sw2_dly1 <- sw2_dly0 %>%
+  as_tibble() %>%
+  mutate(SoilTreatment = soil_name(SoilTreatment)) %>%
+  select(site, intensity, warm, SoilTreatment, Day,
+         matches("_Mean$|^PRECIP_ppt_|^Temp_(max|min)_C"))
+
 # BIOMASS summaries ----------------------------------------------------
 
 # yearly means of biomass and abiotic variables. Wide foremat
@@ -159,6 +176,9 @@ write_csv(lyr_yr_all1, "data-processed/site_means/yr_mean_by_lyr-all_v1.csv")
 
 # soilwat2 yearly
 write_csv(sw2_yrly1, "data-processed/site_means/sw2_yr_means_v1.csv")
+
+# soilwat2 daily
+write_csv(sw2_dly1, "data-processed/site_means/sw2_dly_means_v1.csv")
 
 # biomass files
 
