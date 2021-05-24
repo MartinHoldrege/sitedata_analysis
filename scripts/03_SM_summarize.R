@@ -60,7 +60,6 @@ all2 <- all1 %>%
 
 # total transpiration (to provide a total transpiration across layers)
 tot_transp <- lyr_all1 %>%
-  # later group by SoilTreatment when appropriate
   group_by(site, intensity, warm, SoilTreatment) %>%
   summarize(TRANSP = sum(TRANSP),
             EVAPSOIL = sum(EVAPSOIL, na.rm = TRUE),
@@ -124,4 +123,5 @@ lyr_pft_diff1 <- lyr_pft1 %>%
          TRANSP_perc_diff = calc_perc_diff(TRANSP, intensity, warm)) %>%
   filter(!(intensity == "ambient" & warm == "ambient")) %>%
   left_join(aridity1, by = "site")
+
 
