@@ -203,7 +203,9 @@ query_add_trmt <- function(connections, query) {
     dbGetQuery(x, query) %>%
       mutate(intensity = trmts[1], # intensity trmt
              # warming trmt
-             warm = trmts[2])
+             warm = trmts[2],
+             SoilTreatment = soil_name(.data$SoilTreatment)) %>%
+      as_tibble()
   })
   out
 }
@@ -245,3 +247,24 @@ trmts2factors <- function(df) {
            )
   out
 }
+
+
+# mutate_pft_cols ---------------------------------------------------------
+
+# parsing PFT based columns when converting to long form in
+# 01_summary_dfs...script
+mutate_pft_cols <- function(df) {
+  stopifnot(is.data.frame(df),
+            "name" %in% names(df))
+
+  out <- df %>%
+    mutate(layer = str_extract(name, "(?<=Lyr_)\\d"), # extracting layer
+           name = str_replace(name, "_Lyr_\\d_Mean", ""), # removing layer from name
+           name = str_replace(name, "_transp", ""), # shortening names duplicated names
+           name = str_replace(name, "_swa", ""), # shortening swa name
+           PFT = str_extract(name, "(?<=_)[A-z]+$"),  # extracting plant functional type
+           name = str_replace(name, "_[A-z]+$", "")) # remove PFT from name
+  out
+}
+
+
