@@ -26,23 +26,21 @@ dly_lyr_all1 <- read_csv("data-processed/site_means/dly_mean_by_lyr-all_v1.csv")
 # aridity
 aridity1 <- read_csv("data-processed/aridity_by_site.csv")
 
+
+# functions ---------------------------------------------------------------
+
+# quantiles
+q1 <- function(x) quantile(x, 0.05, na.rm = TRUE)
+q2 <- function(x) quantile(x, 0.95, na.rm = TRUE)
+
 # summary dfs -------------------------------------------------------------
 
 dly2 <- dly1 %>%
   rename(day = Day,
          EVAPSURFACE = EVAPSURFACE_evap_total_Mean,
          drain = DEEPSWC_lowLayerDrain_cm_Mean) %>%
-  select(site, day, SoilTreatment, intensity, warm, EVAPSURFACE, drain) %>%
-  trmts2factors()
+  select(site, day, SoilTreatment, intensity, warm, EVAPSURFACE, drain)
 
-
-# quantiles
-quantile(aridity1$aridity_index, c(0.25, 0.5, 0.75))
-
-cut_aridity <- function(x) {
-  cut(x, breaks = c(0, 0.3, 0.5,100),
-      labels = c("aridity < 0.3", "aridity 0.3 - 0.5", "aridity > 0.5 "))
-}
 
 aridity1 <- aridity1 %>%
   select(-matches("_SD$")) %>%
@@ -62,7 +60,18 @@ dly_tot_transp <- dly_lyr_all1 %>%
   left_join(aridity1, by = "site") %>%
   left_join(dly2, by = c("site", "day", "intensity", "warm", "SoilTreatment")) %>%
   # total evaporation
-  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE)
+  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE)%>%
+  trmts2factors()
+
+# mean and 5th and 95th percentiles
+dly_tot_mean <- dly_tot_transp %>%
+  group_by(day, intensity, warm, SoilTreatment, aridity_group) %>%
+  # 5th and 95th percentiles calculated to show bands
+  summarise(across(c(TRANSP, drain, EVAPTOT),
+                   .fns = list(mean = ~mean(.x, na.rm = TRUE), lwr = q1,
+                               upr = q2)),
+            .groups = "drop")
+
 
 # diff and % diff between a given treatment and ambient intensity and warming
 # consider also calculate difference between trmt and ambient intensity
@@ -76,3 +85,12 @@ dly_tot_diff <- dly_tot_transp %>%
             warm = quote(warm)) %>%
   # diffs for ambient are 0
   filter(!(intensity == "ambient" & warm == "ambient"))
+
+# mean diffs by group
+dly_tot_diff_means <- dly_tot_diff %>%
+  group_by(day, intensity, warm, SoilTreatment, aridity_group) %>%
+  # 5th and 95th percentiles calculated to show bands
+  summarise(across(matches("_diff"),
+                   .fns = list(mean = ~mean(.x, na.rm = TRUE), lwr = q1,
+                               upr = q2)),
+            .groups = "drop")
