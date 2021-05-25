@@ -30,22 +30,8 @@ caption <- paste("STEPWAT2 run for 200 sites.",
                  "markov coefficients.",
                  "\nControl is ambient intensity and ambient warming")
 
-transp_lab1 <- "Transpiration difference (trmt - control; cm)"
-transp_lab2 <- "% transpiration change"
 
 se = FALSE # confidence interval
-
-# these labels will need to be adjusted once no longer just 2x intensity
-vwc_lab1 <- "VWC difference (trmt - control; cm/cm)"
-depth_lab  <- "Soil depth (cm)"
-wetday_lab1 <- "Wet day difference (trmt - control; # days > -1.5 MPa)"
-aridity_lab <- "Aridity index (MAP/PET)"
-
-evap_lab1 <- "Evaporation difference (trmt - control; cm)"
-evap_lab2 <- "% evaporation change"
-
-drain_lab1 <- "deep drainage difference (trmt - control; cm)"
-drain_lab2 <- "% deep drainage change"
 
 perc_sub <-"% change in transpiration (trmt vs control) across soil layers"
 

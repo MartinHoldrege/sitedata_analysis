@@ -24,12 +24,9 @@ theme_update(strip.background = element_blank(),
 caption <- paste("STEPWAT2 run for 200 sites.",
                  "\nControl is ambient intensity and ambient warming")
 
-bio_lab <- "Biomass (g/m2)"
-bio_diff_lab1 <- expression(Biomass[trmt]~-~Biomass[control]~"("*gm^-2*")")
-bio_diff_lab2 <- expression("%"~Biomass~change~"("*frac("trmt - ctrl","ctrl")~"*100)")
+
 SGr_diff_lab1 <- expression("shrub:grass difference ("*S*":"*G[trmt]~-~S*":"*G[control]*")")
 PFT_lab <- "Plant functional type"
-aridity_lab <- "Aridity index (MAP/PET)"
 
 pfts <- levels(bio_prime_PFT1$prime_PFT)
 
@@ -72,7 +69,7 @@ g2 <- g +
 g2 +
   geom_boxplot(aes(x = SG, y = bio_diff,
                       fill= SoilTreatment)) +
-  labs(y = bio_diff_lab1,
+  labs(y = bio_lab1,
        title = "Change in shrub and grass biomass")
 
 # % change boxplot s and g
@@ -80,7 +77,7 @@ g2 +
 g3 <- g2 +
   geom_boxplot(aes(x = SG, y = bio_perc_diff,
                    fill= SoilTreatment)) +
-  labs(y = bio_diff_lab2,
+  labs(y = bio_lab2,
        title = "% Change in shrub and grass biomass")
 g3
 
@@ -97,7 +94,7 @@ p2 <- p +
   geom_point(aes(y =  bio_diff)) +
   geom_smooth(aes(y = bio_diff), method = "loess", se = FALSE) +
   labs(x = aridity_lab,
-       y = bio_diff_lab1,
+       y = bio_lab1,
        title = "Shrub and grass sensitivity with aridity")
 
 p2 + facet_grid(SG + warm ~ intensity)
@@ -109,7 +106,7 @@ p2 <- p +
   geom_point(aes(y =  bio_perc_diff)) +
   geom_smooth(aes(y = bio_perc_diff), method = "loess", se = FALSE) +
   labs(x = aridity_lab,
-       y = bio_diff_lab2,
+       y = bio_lab2,
        title = "Shrub and grass % change with aridity")
 
 p2 + facet_grid(SG + warm ~ intensity)
@@ -162,7 +159,7 @@ g <- ggplot(bio_prime_PFT_diff1, aes(fill = SoilTreatment)) +
 
 g + geom_boxplot(aes(x = prime_PFT, y = bio_diff)) +
   labs(title = "Biomass change by PFT",
-       y = bio_diff_lab1)
+       y = bio_lab1)
 
 # PFT % diff boxplots
 
@@ -182,7 +179,7 @@ g + geom_boxplot(aes(x = prime_PFT, y = bio_perc_diff),
                  outlier.shape = NA) +
   labs(title = "% Biomass change by PFT",
        subtitle = "outliers not shown",
-       y = bio_diff_lab2,
+       y = bio_lab2,
        x = NULL) +
   ylim(ylim =ylim)
 
@@ -197,7 +194,7 @@ map(pfts, function(x) {
     geom_point(aes(y = bio_diff), alpha = 0.5) +
     geom_smooth(aes(y = bio_diff), method = "loess", se = FALSE) +
     labs(x = aridity_lab,
-         y = bio_diff_lab1,
+         y = bio_lab1,
          title = paste(x, "biomass change with aridity"))
 
   g1 <- g + facet_grid(warm~intensity)
@@ -229,7 +226,7 @@ map(pfts, function(x) {
     geom_point(alpha = 0.5) +
     geom_smooth(method = "loess", se = FALSE) +
     labs(x = aridity_lab,
-         y = bio_diff_lab2,
+         y = bio_lab2,
          title = paste(x, "% biomass change with aridity"))
 
   g1 <- g + facet_grid(warm~intensity) +

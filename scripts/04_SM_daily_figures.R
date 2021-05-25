@@ -36,13 +36,7 @@ cap2 <- paste(
 )
 
 
-transp_lab0 <- "Transpiration (cm)"
-transp_lab1 <- "Transpiration difference (trmt - control; cm)"
 
-evap_lab0 <- "Evaporation (cm)"
-evap_lab1 <- "Evaporation difference (trmt - control; cm)"
-drain_lab0 <- "Deep drainage (cm)"
-drain_lab1 <- "Drainage difference (trmt - control; cm)"
 # line and ribbon plot
 line_rib <- function(y_string, add_ribbon = TRUE) {
   y_mean = paste0(y_string, "_mean")
