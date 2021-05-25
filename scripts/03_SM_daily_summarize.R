@@ -33,6 +33,12 @@ aridity1 <- read_csv("data-processed/aridity_by_site.csv")
 q1 <- function(x) quantile(x, 0.05, na.rm = TRUE)
 q2 <- function(x) quantile(x, 0.95, na.rm = TRUE)
 
+cut_aridity <- function(x) {
+  cut(x,
+      breaks = c(0, 0.3, 0.5, 100),
+      labels = c("aridity < 0.3", "aridity 0.3 - 0.5", "aridity > 0.5"))
+}
+
 # summary dfs -------------------------------------------------------------
 
 dly2 <- dly1 %>%
@@ -63,11 +69,16 @@ dly_tot_transp <- dly_lyr_all1 %>%
   mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE)%>%
   trmts2factors()
 
-# mean and 5th and 95th percentiles
-dly_tot_mean <- dly_tot_transp %>%
+# mean and 5th and 95th percentiles as well as cumulative values
+dly_tot_mean <- dly_tot_transp  %>%
+  # cumulative transp etc. throughout the year
+  group_by(site, intensity, warm, SoilTreatment, aridity_group) %>%
+  arrange(day) %>%
+  mutate_at(vars(matches("TRANSP|drain|EVAPTOT")),
+            .funs = list(cum = cumsum)) %>%
   group_by(day, intensity, warm, SoilTreatment, aridity_group) %>%
   # 5th and 95th percentiles calculated to show bands
-  summarise(across(c(TRANSP, drain, EVAPTOT),
+  summarise(across(matches("TRANSP|drain|EVAPTOT"),
                    .fns = list(mean = ~mean(.x, na.rm = TRUE), lwr = q1,
                                upr = q2)),
             .groups = "drop")

@@ -19,3 +19,10 @@ cols_intensity <- c("ambient" = "black",
                     "1.5x intensity" = "#fc8d59",
                     "2x intensity" = "#d7301f")
 
+cols_aridity <- c("aridity < 0.3" = "#d53e4f",
+                  "aridity 0.3 - 0.5" = "#f46d43",
+                  "aridity > 0.5" = "#2c7bb6")
+
+cols_warm <- c("ambient" = "black",
+               "3C warming" = "#fdcc8a",
+               "5C warming" = "#d7301f")
