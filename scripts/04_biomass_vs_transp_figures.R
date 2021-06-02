@@ -36,8 +36,27 @@ bio_transp1 <- bio_SG1 %>%
             by = join_vars) %>%
   left_join(bio_SG_diff1 %>%
               select(-matches(match_vars)),
-            by = c(c("SG", "site", "intensity", "warm", "SoilTreatment"))
+            by = c("SG", "site", "intensity", "warm", "SoilTreatment")
   )
+
+bio_transp2 <- bio_transp1 %>%
+  mutate(MAT_actual = ifelse(warm == "3C warming", TEMP_avg_C_Mean + 3.07,
+                             ifelse(warm == "5C warming",
+                                    TEMP_avg_C_Mean + 5.4,
+                                    TEMP_avg_C_Mean)),
+         MAT_thresh = ifelse(MAT_actual > 9.5 , "MAT > 9.5C", "MAT < 9.5C"),
+         # so default colors are intuitive
+         MAT_thresh = fct_rev(factor(MAT_thresh)))
+
+y_lookup <- c(900, 1000)
+# number of sites above threshold
+n_thresh <- bio_transp2 %>%
+  filter(intensity == "ambient") %>%
+  group_by(warm, MAT_thresh) %>%
+  summarize(n = n(), .groups = "drop") %>%
+  mutate(label = paste0("n = ", n),
+         # location to plot labels
+         y = y_lookup[as.numeric(MAT_thresh)])
 
 # min temp for treatment to cross the 9.5C temp threshold, that is
 # described in appendix 2, of palmquiest et al 2018.
@@ -92,18 +111,29 @@ pdf("figures/biomass/bio_vs_transp_v1.pdf")
 # * absolute values -------------------------------------------------------
 # biomass and transpiration, under ambient conditions
 
-bio_transp1 %>%
+bio_transp2 %>%
   filter(warm == "ambient", intensity == "ambient",
          SoilTreatment == "loam") %>%
-  mutate(MAT_thresh = ifelse(TEMP_avg_C_Mean > 9.5, "MAT > 9.5C", "MAT < 9.5C"),
-         # so default colors are intuitive
-         MAT_thresh = fct_rev(factor(MAT_thresh))) %>%
   ggplot(aes(TRANSP, biomass, color = MAT_thresh)) +
-  geom_point(size = 0.5) +
+  geom_point(size = 0.7) +
   facet_wrap(~PFT, scales = "free") +
-  geom_smooth(method = "lm", se = FALSE) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.7) +
   labs(x = transp_lab0, y = bio_lab0,
        subtitle = "Biomass vs transpiration for shrubs and grasses. Only control treatment shown.",
+       caption = cap1)
+
+bio_transp2 %>%
+  filter(intensity == "ambient",
+         SoilTreatment == "loam", SG == "total_shrub") %>%
+  ggplot(aes(TRANSP, biomass, color = MAT_thresh)) +
+  geom_point(size = 0.7) +
+  facet_wrap(~warm, ncol = 2) +
+  geom_smooth(method = "lm", se = FALSE, size = 0.7) +
+  # showing sample size on each panel
+  geom_text(data = n_thresh, aes(x = 12, y = y, label = label),
+            show.legend = FALSE) +
+  labs(x = transp_lab0, y = bio_lab0,
+       subtitle = "Biomass vs transpiration for shrubs. Only ambient intensity shown.",
        caption = cap1)
 
 # diffs -------------------------------------------------------------------
