@@ -79,11 +79,13 @@ doy_axis <- function(){
   )
 }
 
-line_plots <- function(g1, add_ribbon = TRUE, name_extension = "") {
+line_plots <- function(g1, add_ribbon = TRUE, name_extension = "",
+                       aet_plots = FALSE) {
   # outputs line plots vs doy by aridity
   # g1--ggplot object
   # add_ribbon --logical whether to add ribbon to plot
   # name_extension (e.g. _diff), to comlete name for line_rib function
+  # aet
 
   o1 <- g1 +
     line_rib(paste0("TRANSP", name_extension),
@@ -103,7 +105,24 @@ line_plots <- function(g1, add_ribbon = TRUE, name_extension = "") {
     labs(y = drain_lab0,
          title = "Drainage")
 
-  list(TRANSP = o1, EVAPTOT = o2, drain = o3)
+  # create figures of AET
+  if (aet_plots) {
+    o4 <- g1 +
+      line_rib(paste0("AET", name_extension),
+               add_ribbon = add_ribbon) +
+      labs(y = aet_lab0,
+           title = "AET")
+
+    o5 <- g1 +
+      line_rib(paste0("T_AET", name_extension),
+               add_ribbon = add_ribbon) +
+      labs(y = t_aet_lab0,
+           title = "T/AET")
+    out <- list(TRANSP = o1, EVAPTOT = o2, AET = o4, T_AET = o5, drain = o3)
+  } else {
+    out <- list(TRANSP = o1, EVAPTOT = o2, drain = o3)
+  }
+  out
 }
 
 # sm across layers and PFTS -----------------------------------------------
@@ -124,7 +143,7 @@ g1 <- dly_tot_mean %>%
        subtitle = "Only data from control treatments shown") +
   doy_axis()
 
-plots <- line_plots(g1)
+plots <- line_plots(g1, aet_plots = TRUE)
 
 plots
 
@@ -144,7 +163,7 @@ g1 <- dly_tot_mean %>%
   scale_color_manual(values = cols_intensity)
 
 
-(plots <- line_plots(g1, add_ribbon = FALSE))
+(plots <- line_plots(g1, add_ribbon = FALSE, aet_plots = TRUE))
 
 # also want free axis for one of the plots
 plots$drain +
@@ -154,7 +173,11 @@ plots$drain +
 g1 <- g1 +
   labs(subtitle = "Year to date cumulative values. Only ambient warming data shown")
 
-(plots <- line_plots(g1, add_ribbon = FALSE, name_extension = "_cum"))
+# didn't calculate cumulative values for AET (cumulative T/AET doesn't make
+# sense)
+plots <- line_plots(g1, add_ribbon = FALSE, name_extension = "_cum",
+                    aet_plots = FALSE)
+plots
 
 # also want free axis for one of the plots
 plots$drain +
@@ -173,7 +196,7 @@ g1 <- dly_tot_mean %>%
   scale_color_manual(values = cols_warm)
 
 
-(plots <- line_plots(g1, add_ribbon = FALSE))
+(plots <- line_plots(g1, add_ribbon = FALSE, aet_plots = TRUE))
 
 # also want free axis for one of the plots
 plots$drain +
@@ -183,7 +206,8 @@ plots$drain +
 g1 <- g1 +
   labs(subtitle = "Year to date cumulative values. Only ambient intensity data shown")
 
-(plots <- line_plots(g1, add_ribbon = FALSE, name_extension = "_cum"))
+(plots <- line_plots(g1, add_ribbon = FALSE, name_extension = "_cum",
+                     aet_plots = FALSE))
 
 # also want free axis for one of the plots
 plots$drain +
@@ -205,10 +229,11 @@ g2 <- dly_tot_diff_means %>%
   doy_axis()
 
 # transp/evap/drain
-plots <- line_plots(g2, name_extension = "_diff")
+plots <- line_plots(g2, name_extension = "_diff", aet_plots = TRUE)
 
 # plotting each plot with and without free y axis
-map2(plots, c(transp_lab1, evap_lab1, drain_lab1), function(g, ylab) {
+map2(plots, c(transp_lab1, evap_lab1, aet_lab1, t_aet_lab1,
+              drain_lab1), function(g, ylab) {
   p <- g +
     # replacing ylab
     labs(y = ylab)

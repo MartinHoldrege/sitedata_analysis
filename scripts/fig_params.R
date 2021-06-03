@@ -47,6 +47,16 @@ drain_lab0 <- "Deep drainage (cm)"
 drain_lab1 <- "Deep drainage difference (trmt - control; cm)"
 drain_lab2 <- "% Deep drainage change"
 
+# AET
+aet_lab0 <- "Actual evapotranspiration (cm)"
+aet_lab1 <- "AET difference (trmt - control; cm)"
+aet_lab2 <- "% AET change"
+
+# T/AET
+t_aet_lab0 <- "T/AET"
+t_aet_lab1 <- "T/AET difference (trmt - control; cm)"
+t_aet_lab2 <- "% T/AET change"
+
 # vwc
 vwc_lab1 <- "VWC difference (trmt - control; cm/cm)"
 

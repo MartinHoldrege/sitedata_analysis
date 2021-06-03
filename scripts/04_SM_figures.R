@@ -222,7 +222,7 @@ g +
   labs(y = drain_lab2,
        subtitle =lab_fun1("deep drainage"))
 
-# ** evaporation ----------------------------------------------------------
+# * evaporation ----------------------------------------------------------
 g +
   geom_point(aes(x = aridity_index, y = EVAPTOT_diff)) +
   geom_smooth(aes(x = aridity_index, y = EVAPTOT_diff), method = "loess",
@@ -237,6 +237,38 @@ g +
               se = se) +
   labs(y = evap_lab2,
        subtitle =lab_fun1("total evaporation"))
+
+# * AET ----------------------------------------------------------
+g +
+  geom_point(aes(x = aridity_index, y = AET_diff)) +
+  geom_smooth(aes(x = aridity_index, y = AET_diff), method = "loess",
+              se = se) +
+  labs(y = aet_lab1,
+       title = "Actual evapotranspiration difference vs aridity")
+
+# % change
+g +
+  geom_point(aes(aridity_index, y = AET_perc_diff)) +
+  geom_smooth(aes(aridity_index, y = AET_perc_diff), method = "loess",
+              se = se) +
+  labs(y = aet_lab2,
+       subtitle =lab_fun1("AET"))
+
+# * AET ----------------------------------------------------------
+g +
+  geom_point(aes(x = aridity_index, y = T_AET_diff)) +
+  geom_smooth(aes(x = aridity_index, y = T_AET_diff), method = "loess",
+              se = se) +
+  labs(y = t_aet_lab1,
+       title = "Difference in T/AET ratio vs aridity")
+
+# % change
+g +
+  geom_point(aes(aridity_index, y = T_AET_perc_diff)) +
+  geom_smooth(aes(aridity_index, y = T_AET_perc_diff), method = "loess",
+              se = se) +
+  labs(y = t_aet_lab2,
+       subtitle =lab_fun1("T/AET"))
 
 dev.off()
 

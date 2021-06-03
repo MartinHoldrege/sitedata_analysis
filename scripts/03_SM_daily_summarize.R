@@ -14,8 +14,6 @@ source("scripts/functions.R")
 
 # read in data ------------------------------------------------------------
 
-# Continue HERE
-
 # soilwat2 output for each day of year
 dly1 <- read_csv("data-processed/site_means/sw2_dly_means_v1.csv")
 
@@ -66,10 +64,12 @@ dly_tot_transp <- dly_lyr_all1 %>%
   left_join(aridity1, by = "site") %>%
   left_join(dly2, by = c("site", "day", "intensity", "warm", "SoilTreatment")) %>%
   # total evaporation
-  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE)%>%
+  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE,
+         AET = TRANSP + EVAPTOT, # actual evapotranspiration
+         T_AET = TRANSP/AET)%>%
   trmts2factors()
 
-# mean and 5th and 95th percentiles as well as cumulative values
+# mean and 5th and 95th percentiles and cumulative values
 dly_tot_mean <- dly_tot_transp  %>%
   # cumulative transp etc. throughout the year
   group_by(site, intensity, warm, SoilTreatment, aridity_group) %>%
@@ -78,7 +78,7 @@ dly_tot_mean <- dly_tot_transp  %>%
             .funs = list(cum = cumsum)) %>%
   group_by(day, intensity, warm, SoilTreatment, aridity_group) %>%
   # 5th and 95th percentiles calculated to show bands
-  summarise(across(matches("TRANSP|drain|EVAPTOT"),
+  summarise(across(matches("TRANSP|drain|EVAPTOT|AET"),
                    .fns = list(mean = ~mean(.x, na.rm = TRUE), lwr = q1,
                                upr = q2)),
             .groups = "drop")
@@ -89,7 +89,7 @@ dly_tot_mean <- dly_tot_transp  %>%
 # and level of warming of that trmt.
 dly_tot_diff <- dly_tot_transp %>%
   group_by(site, day, SoilTreatment) %>%
-  mutate_at(.vars = c("TRANSP", "EVAPTOT", "drain"),
+  mutate_at(.vars = c("TRANSP", "EVAPTOT", "drain", "AET", "T_AET"),
             .funs = list(diff = calc_diff, perc_diff = calc_perc_diff),
             # argument to be passed to funs:
             intensity = quote(intensity),

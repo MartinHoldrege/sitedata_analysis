@@ -67,14 +67,16 @@ tot_transp <- lyr_all1 %>%
   left_join(aridity1, by = "site") %>%
   left_join(all2, by = c("site", "intensity", "warm", "SoilTreatment")) %>%
   # total evaporation
-  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE)
+  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE,
+         AET = TRANSP + EVAPTOT, # actual evapotranspiration
+         T_AET = TRANSP/AET) # T/AET ratio
 
 # diff and % diff between a given treatment and ambient intensity and warming
 # consider also calculate difference between trmt and ambient intensity
 # and level of warming of that trmt.
 tot_transp_diff <- tot_transp %>%
   group_by(site, SoilTreatment) %>%
-  mutate_at(.vars = c("TRANSP", "EVAPTOT", "drain"),
+  mutate_at(.vars = c("TRANSP", "EVAPTOT", "drain", "AET", "T_AET"),
             .funs = list(diff = calc_diff, perc_diff = calc_perc_diff),
             # argument to be passed to funs:
             intensity = quote(intensity),

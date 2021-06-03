@@ -51,7 +51,9 @@ bio_transp2 <- bio_transp1 %>%
 y_lookup <- c(900, 1000)
 # number of sites above threshold
 n_thresh <- bio_transp2 %>%
-  filter(intensity == "ambient") %>%
+  # so don't have duplicated sites
+  filter(intensity == "ambient", SoilTreatment == "loam",
+         PFT == "grass") %>%
   group_by(warm, MAT_thresh) %>%
   summarize(n = n(), .groups = "drop") %>%
   mutate(label = paste0("n = ", n),
