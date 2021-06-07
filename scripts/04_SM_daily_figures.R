@@ -9,6 +9,23 @@
 # and sw2_daily_slyrs tables)
 
 # I'm most interested in looking changing in transpiration, drainage, and
+# n wet days
+
+# notes--the run_dly_all/run_dly_lyr_all functionality can now be removed
+# b/ the 03_SM_daily_summarize.R now uses dtplyr and doesn't crash.
+
+# code params -------------------------------------------------------------
+
+# these logicals affect which objects are created in
+# 03_SM_daily_summarize.R and then which figures are created here
+# lets this script work on a subset of objects as desired when memory
+# limitations are a problem.
+
+# create figures of daily values across depths and pfts
+run_dly_all <- TRUE
+
+# create figures of daily values by depth category, across pfts
+run_dly_lyr_all <- TRUE
 
 # dependencies ------------------------------------------------------------
 
@@ -32,7 +49,7 @@ cap1 <- paste(
   )
 cap2 <- paste(
   "STEPWAT2 run for 200 sites. Only loam soils shown.\n",
-  "Lines are means across sites"
+  "Lines show means across sites for each day of year"
 )
 
 
@@ -125,8 +142,19 @@ line_plots <- function(g1, add_ribbon = TRUE, name_extension = "",
   out
 }
 
+depth_by_arid <- function(data) {
+  ggplot(data = data, aes(x = day)) +
+    lemon::facet_rep_grid(depth_group ~ aridity_group) +
+    labs(caption = cap2) +
+    doy_axis()
+}
+
 # sm across layers and PFTS -----------------------------------------------
 
+# if true then the sourced file should have created the necessary
+# objects
+
+if (run_dly_all) {
 pdf("figures/soil_moisture/SM_vs_doy_v1.pdf")
 # * absolute values-------------------------------------------------------
 
@@ -145,12 +173,12 @@ g1 <- dly_tot_mean %>%
 
 plots <- line_plots(g1, aet_plots = TRUE)
 
-plots
+map(plots, print)
 
 # also want free axis for one of the plots
-plots$drain +
+p <- plots$drain +
   lemon::facet_rep_wrap(~ aridity_group, ncol = 1, scales = "free_y")
-
+print(p)
 # ** by intensity ------------------------------------------------------
 g1 <- dly_tot_mean %>%
   # just ambient temp
@@ -163,12 +191,13 @@ g1 <- dly_tot_mean %>%
   scale_color_manual(values = cols_intensity)
 
 
-(plots <- line_plots(g1, add_ribbon = FALSE, aet_plots = TRUE))
+plots <- line_plots(g1, add_ribbon = FALSE, aet_plots = TRUE)
+map(plots, print)
 
 # also want free axis for one of the plots
-plots$drain +
+p <- plots$drain +
   lemon::facet_rep_wrap(~ aridity_group, ncol = 1, scales = "free_y")
-
+print(p)
 # cumulative metrics
 g1 <- g1 +
   labs(subtitle = "Year to date cumulative values. Only ambient warming data shown")
@@ -177,12 +206,12 @@ g1 <- g1 +
 # sense)
 plots <- line_plots(g1, add_ribbon = FALSE, name_extension = "_cum",
                     aet_plots = FALSE)
-plots
+map(plots, print)
 
 # also want free axis for one of the plots
-plots$drain +
+p <- plots$drain +
   lemon::facet_rep_wrap(~ aridity_group, ncol = 1, scales = "free_y")
-
+print(p)
  # ** by warming ------------------------------------------------------
 
 g1 <- dly_tot_mean %>%
@@ -196,23 +225,25 @@ g1 <- dly_tot_mean %>%
   scale_color_manual(values = cols_warm)
 
 
-(plots <- line_plots(g1, add_ribbon = FALSE, aet_plots = TRUE))
+plots <- line_plots(g1, add_ribbon = FALSE, aet_plots = TRUE)
+map(plots, print)
 
 # also want free axis for one of the plots
-plots$drain +
+p <- plots$drain +
   lemon::facet_rep_wrap(~ aridity_group, ncol = 1, scales = "free_y")
-
+print(p)
 # cumulative metrics
 g1 <- g1 +
   labs(subtitle = "Year to date cumulative values. Only ambient intensity data shown")
 
-(plots <- line_plots(g1, add_ribbon = FALSE, name_extension = "_cum",
-                     aet_plots = FALSE))
+plots <- line_plots(g1, add_ribbon = FALSE, name_extension = "_cum",
+                     aet_plots = FALSE)
+map(plots, print)
 
 # also want free axis for one of the plots
-plots$drain +
+p <- plots$drain +
   lemon::facet_rep_wrap(~ aridity_group, ncol = 1, scales = "free_y")
-
+print(p)
 #  * diffs -------------------------------------------------------------------
 
 # trmt - control differences
@@ -230,7 +261,7 @@ g2 <- dly_tot_diff_means %>%
 
 # transp/evap/drain
 plots <- line_plots(g2, name_extension = "_diff", aet_plots = TRUE)
-
+map(plots, print)
 # plotting each plot with and without free y axis
 map2(plots, c(transp_lab1, evap_lab1, aet_lab1, t_aet_lab1,
               drain_lab1), function(g, ylab) {
@@ -238,7 +269,82 @@ map2(plots, c(transp_lab1, evap_lab1, aet_lab1, t_aet_lab1,
     # replacing ylab
     labs(y = ylab)
   p2 <- p + trmt_free()
-  list(p, p2)
+  out <- list(p, p2)
+  walk(out, print)
 })
 
 dev.off()
+}
+
+
+# sm by layer across PFTs -------------------------------------------------
+
+
+if (run_dly_lyr_all) {
+
+pdf("figures/soil_moisture/SM_vs_doy_by_lyr_v1.pdf")
+
+# * by intensity ----------------------------------------------------------
+
+p <- list()
+g1 <- dly_lyr_means %>%
+  filter(warm == "ambient")
+
+
+g1 <- dly_lyr_means %>%
+  filter(warm == "ambient") %>%
+  depth_by_arid() +
+  scale_color_manual(values = cols_intensity) +
+  labs(subtitle = "Only ambient warming shown")
+
+# transp
+p[[1]] <- g1  +
+  geom_line(aes(y = TRANSP, color = intensity)) +
+  labs(y = transp_lab0,
+       title = "Transpiration by depth"
+  )
+
+# VWC
+p[[2]] <- g1  +
+  geom_line(aes(y = VWCMATRIC, color = intensity)) +
+  labs(y = vwc_lab0,
+       title = "VWC by depth")
+
+p[[3]] <- g1  +
+  geom_line(aes(y = WETDAY, color = intensity)) +
+  labs(y = wetday_prop_lab0,
+       title = "Proportion wet days by depth")
+
+
+# * by warming ----------------------------------------------------------
+
+g1 <- dly_lyr_means %>%
+  filter(intensity == "ambient") %>%
+  depth_by_arid() +
+  scale_color_manual(values = cols_warm) +
+  labs(subtitle = "Only ambient intensity shown")
+
+# transp
+p[[4]] <- g1  +
+  geom_line(aes(y = TRANSP, color = warm)) +
+  labs(y = transp_lab0,
+       title = "Transpiration by depth"
+  )
+
+# VWC
+p[[5]] <- g1  +
+  geom_line(aes(y = VWCMATRIC, color = warm)) +
+  labs(y = vwc_lab0,
+       title = "VWC by depth")
+
+# wet days
+p[[6]] <- g1  +
+  geom_line(aes(y = WETDAY, color = warm)) +
+  labs(y = wetday_prop_lab0,
+       title = "Proportion wet days by depth")
+
+# have to explicity print inside if statement
+map(p, print)
+
+dev.off()
+}

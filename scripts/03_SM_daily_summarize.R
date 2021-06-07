@@ -37,6 +37,8 @@ cut_aridity <- function(x) {
       labels = c("aridity < 0.3", "aridity 0.3 - 0.5", "aridity > 0.5"))
 }
 
+
+
 # summary dfs -------------------------------------------------------------
 
 dly2 <- dly1 %>%
@@ -44,7 +46,6 @@ dly2 <- dly1 %>%
          EVAPSURFACE = EVAPSURFACE_evap_total_Mean,
          drain = DEEPSWC_lowLayerDrain_cm_Mean) %>%
   select(site, day, SoilTreatment, intensity, warm, EVAPSURFACE, drain)
-
 
 aridity1 <- aridity1 %>%
   select(-matches("_SD$")) %>%
@@ -55,6 +56,15 @@ aridity1 <- aridity1 %>%
 
 # ** across pfts ----------------------------------------------------------
 
+# logical so that this section of code can be turned off from
+# scripts that source it (because slow, memory overloading)
+run_dly_all <- if(!exists("run_dly_all")) {
+  TRUE
+} else {
+  run_dly_all
+}
+
+if (run_dly_all){
 # total transpiration (to provide a total transpiration across layers)
 dly_tot_transp <- dly_lyr_all1 %>%
   group_by(site, day, intensity, warm, SoilTreatment) %>%
@@ -105,3 +115,48 @@ dly_tot_diff_means <- dly_tot_diff %>%
                    .fns = list(mean = ~mean(.x, na.rm = TRUE), lwr = q1,
                                upr = q2)),
             .groups = "drop")
+
+
+# free up memory, objects not needed
+remove("dly_tot_transp", "dly_tot_diff")
+
+}
+# * by depth across pft --------------------------------------------------
+
+remove("dly1", "dly2")
+
+# logical so that this section of code can be turned off from
+# scripts that source it (because slow, memory overloading)
+run_dly_lyr_all <- if(!exists("run_dly_lyr_all")) {
+  TRUE
+} else {
+  run_dly_lyr_all
+}
+
+if (run_dly_lyr_all){
+
+library(dtplyr) # this code crashes (memory constraint I think) when
+# just use regular dplyr
+
+dly_lyr_means <- dly_lyr_all1 %>%
+  #slice_sample(n = 100) %>%
+  lazy_dt() %>%
+  # slice_sample(n = 1000) %>%  # for testing
+  mutate(depth_group = cut_depth(lyr2depth(layer))) %>%
+  select(-EVAPSOIL, -layer) %>%
+  group_by(site, day, intensity, warm, SoilTreatment, depth_group) %>%
+  summarize(TRANSP = sum(TRANSP),
+            VWCMATRIC = mean(VWCMATRIC),
+            WETDAY = mean(WETDAY),
+            .groups = "drop") %>%
+  left_join(aridity1, by = "site") %>%
+  # now averaging across sites
+  group_by(day, intensity, warm, SoilTreatment, depth_group, aridity_group) %>%
+  # note for now not calculating upr and lwr to reduce computation
+  summarise(across(c("TRANSP", "VWCMATRIC", "WETDAY"),
+                   .fns = list(mean = ~mean(.x, na.rm = TRUE)))) %>%
+  as_tibble() %>%
+  trmts2factors()
+
+remove("dly_lyr_all1")
+}

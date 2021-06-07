@@ -34,6 +34,18 @@ depth2cm <- function() {
   lookup
 }
 
+
+# cut depth ---------------------------------------------------------------
+
+# cut depth into 3 categories
+cut_depth <- function(x) {
+  # x--numeric vector, depth of the layer
+  stopifnot(x %in% lyr2depth(1:8))
+  cut(x,
+      breaks = c(0, 15, 50, 200),
+      labels = c("10 cm", "20-40 cm", "50-150 cm"))
+}
+
 # lookup vectors ----------------------------------------------------------
 
 

@@ -58,10 +58,14 @@ t_aet_lab1 <- "T/AET difference (trmt - control; cm)"
 t_aet_lab2 <- "% T/AET change"
 
 # vwc
+vwc_lab0 <- "Volumetric water content; cm/cm)"
 vwc_lab1 <- "VWC difference (trmt - control; cm/cm)"
 
 # wetday
 wetday_lab1 <- "Wet day difference (trmt - control; # days > -1.5 MPa)"
+
+# proportion wet days
+wetday_prop_lab0 <- "Proportion wet days (days > -1.5 MPa)"
 
 # biomass
 bio_lab0 <- expression("Biomass ("*gm^-2*")")
