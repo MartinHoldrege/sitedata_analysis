@@ -43,6 +43,24 @@ climate_diffs[, cols] <- sw2_yrly1[, cols] - amb_means2[, cols]
 
 climate_diffs <- trmts2factors(climate_diffs)
 
+# percent differences
+climate_perc_diffs <- climate_diffs
+climate_perc_diffs[, cols] <- (sw2_yrly1[, cols] - amb_means2[, cols])/amb_means2[, cols]*100
+
+# mean percent increase in interannual SD of precip
+sd_means <- climate_perc_diffs %>%
+  group_by(intensity) %>%
+  summarise(perc_sd_change = mean(PRECIP_ppt_SD)) %>%
+  mutate(label = paste0("mean = ", round(perc_sd_change, 1), "%"))
+
+sd_means
+
+# intensity       PRECIP_ppt_SD
+# <fct>                   <dbl>
+#   1 ambient               -0.0407
+# 2 1.25x intensity       18.1
+# 3 1.5x intensity        33.6
+# 4 2x intensity          60.8
 
 # * aridity index/climate -------------------------------------------------
 
@@ -94,6 +112,17 @@ g +
   geom_point(aes(PRECIP_ppt_SD)) +
   labs(x = "difference in SD of annual ppt (cm)",
        subtitle = "Differences in the mean of standard deviation of annual precip")
+
+climate_perc_diffs %>%
+  filter(intensity != "ambient") %>%
+ggplot(aes(x = PRECIP_ppt_SD)) +
+  theme(legend.position = "top") +
+  facet_wrap(~intensity, ncol = 1) +
+  geom_histogram() +
+  geom_label(data = filter(sd_means, intensity != "ambient"),
+             aes(x = 75, y = 500, label = label )) +
+  labs(x = "% Change in precip SD",
+       subtitle = "% Change in SD of inter-annual precip, relative to ambient (simulated) intensity")
 
 dev.off()
 
