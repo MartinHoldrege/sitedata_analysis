@@ -107,6 +107,9 @@ texture_legend <- function() {
   )
 }
 
+
+# change to TRUE if want to run all non pub qual figures
+if (FALSE){
 # sm sum across lyrs ----------------------------------------------------
 
 # soil moisture across layers (ie transpiration or other cumulative metrics)
@@ -479,4 +482,6 @@ for (i in 1:nrow(fig_df)) {
 }
 
 dev.off()
+
+}
 

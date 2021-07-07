@@ -149,6 +149,9 @@ depth_by_arid <- function(data) {
     doy_axis()
 }
 
+
+
+
 # sm across layers and PFTS -----------------------------------------------
 
 # if true then the sourced file should have created the necessary
@@ -287,8 +290,6 @@ pdf("figures/soil_moisture/SM_vs_doy_by_lyr_v1.pdf")
 # * by intensity ----------------------------------------------------------
 
 p <- list()
-g1 <- dly_lyr_means %>%
-  filter(warm == "ambient")
 
 
 g1 <- dly_lyr_means %>%

@@ -10,28 +10,28 @@
 #'
 #' @param x numeric vector (soil layer in SOILWAT2)
 #'
-#' @return numeric vector of depth (cm)
+#' @return numeric vector of depth (cm) (midpoint of layer)
 #' @export
 #'
 #' @examples
 #' lyr2depth(c(1, 1, 2:8))
 lyr2depth <- function(x) {
   stopifnot(x %in% 1:8)
-  depth_lookup <- c(10, 20, 30, 40, 60, 80, 100, 150)
+  # bottom of layers
+  #depth_lookup <- c(10, 20, 30, 40, 60, 80, 100, 150)
+  # midpoint of layer:
+  depth_lookup <- c(5,  15,  25,  35,  50,  70,  90, 125)
   out <- depth_lookup[x]
   out
 }
 
 
-# depth2cm ----------------------------------------------------------------
+# depth2mid ---------------------------------------------------------------
 
-# lookup function for ggplot facet labelling
+# replacing depth (i.e. actually bottom of layer), with middle of layer
+depth2mid <- function(x) {
+  bottom <- lyr2depth(1:8) # bottom of layer
 
-depth2cm <- function() {
-  depths <- lyr2depth(1:8)
-  lookup <- paste(depths, "cm")
-  names(lookup) <- depths
-  lookup
 }
 
 
@@ -42,8 +42,8 @@ cut_depth <- function(x) {
   # x--numeric vector, depth of the layer
   stopifnot(x %in% lyr2depth(1:8))
   cut(x,
-      breaks = c(0, 15, 50, 200),
-      labels = c("10 cm", "20-40 cm", "50-150 cm"))
+      breaks = c(0, 10, 40, 200),
+      labels = c("0-10 cm", "10-40 cm", "40-150 cm"))
 }
 
 # lookup vectors ----------------------------------------------------------

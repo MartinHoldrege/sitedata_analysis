@@ -138,6 +138,7 @@ if (run_dly_lyr_all){
 library(dtplyr) # this code crashes (memory constraint I think) when
 # just use regular dplyr
 
+# grouping by depth group and aridity group
 dly_lyr_means <- dly_lyr_all1 %>%
   #slice_sample(n = 100) %>%
   lazy_dt() %>%
@@ -153,10 +154,43 @@ dly_lyr_means <- dly_lyr_all1 %>%
   # now averaging across sites
   group_by(day, intensity, warm, SoilTreatment, depth_group, aridity_group) %>%
   # note for now not calculating upr and lwr to reduce computation
-  summarise(across(c("TRANSP", "VWCMATRIC", "WETDAY"),
+  summarize(across(c("TRANSP", "VWCMATRIC", "WETDAY"),
                    .fns = list(mean = ~mean(.x, na.rm = TRUE)))) %>%
   as_tibble() %>%
   trmts2factors()
 
+
+# avaraged across aridity groups--for pub qual figure
+# mean and 5th and 9th percentiles per depth category
+dly_lyr_means_all <- dly_lyr_all1 %>%
+  filter(warm == "ambient") %>%
+  # slice_sample(n = 100) %>% for testing
+  lazy_dt() %>%
+  mutate(depth_group = cut_depth(lyr2depth(layer))) %>%
+  select(-EVAPSOIL, -layer) %>%
+  group_by(site, day, intensity, warm, SoilTreatment, depth_group) %>%
+  summarize(TRANSP = sum(TRANSP),
+            WETDAY = mean(WETDAY),
+            .groups = "drop") %>%
+  left_join(aridity1, by = "site") %>%
+  # now averaging across sites
+  group_by(day, intensity, warm, SoilTreatment, depth_group) %>%
+  # across() didn't work with dtplyr so explicitly defining each column
+  summarize(TRANSP_mean = mean(TRANSP, na.rm = TRUE),
+            WETDAY_mean = mean(WETDAY),
+            TRANSP_lwr = q1(TRANSP),
+            TRANSP_upr = q2(TRANSP),
+            WETDAY_lwr = q1(WETDAY),
+            WETDAY_upr = q2(WETDAY)) %>%
+  as_tibble() %>%
+  trmts2factors()
+
+
 remove("dly_lyr_all1")
 }
+
+
+# save files --------------------------------------------------------------
+
+saveRDS(dly_lyr_means_all,
+        "data-processed/dly_lyr_means_all.RDS")
