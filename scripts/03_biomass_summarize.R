@@ -86,3 +86,30 @@ bio_SGr_diff1 <- bio_SG1 %>%
   mutate(SGr_diff = calc_diff(SGr, intensity, warm)) %>%
   filter(!(intensity == "ambient" & warm == "ambient"))
 
+# four main PFTs (c3 and c4 grasses seperate)
+bio_pft4_diff <- bio1 %>%
+  mutate(PFT = PFT_four(PFT)) %>%
+  filter(!is.na(PFT)) %>%
+  group_by(site, intensity, warm, SoilTreatment, PFT) %>%
+  summarize(biomass = sum(biomass), .groups = "drop") %>%
+  left_join(aridity1, by = "site") %>%
+  group_by(site, SoilTreatment, PFT) %>%
+  mutate(# difference in biomass
+    bio_diff = calc_diff(biomass, intensity, warm),
+    bio_perc_diff = calc_perc_diff(biomass, intensity, warm)) %>%
+  filter(!(intensity == "ambient" & warm == "ambient")) %>%
+  select(-biomass)
+
+# 3 main PFTs (c3 and c4 grasses combined)
+bio_pft3_diff <- bio1 %>%
+  mutate(PFT = PFT_three(PFT)) %>%
+  filter(!is.na(PFT)) %>%
+  group_by(site, intensity, warm, SoilTreatment, PFT) %>%
+  summarize(biomass = sum(biomass), .groups = "drop") %>%
+  left_join(aridity1, by = "site") %>%
+  group_by(site, SoilTreatment, PFT) %>%
+  mutate(# difference in biomass
+    bio_diff = calc_diff(biomass, intensity, warm),
+    bio_perc_diff = calc_perc_diff(biomass, intensity, warm)) %>%
+  filter(!(intensity == "ambient" & warm == "ambient")) %>%
+  select(-biomass)

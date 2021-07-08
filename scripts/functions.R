@@ -101,6 +101,46 @@ SG_lookup <-  c("sagebrush" = "total_shrub",
                "p.warm.grass" = "total_grass")
 
 
+#' Four main PFTs
+#'
+#' @param x vector of original 10 PFTs
+#'
+#' @return vector with 4 PFTs (C3 and C4 grasses seperate)
+#' @export
+PFT_four <- function(x) {
+  pft4_lookup <- c("sagebrush" = "shrub",
+                   "other shrub" = "shrub",
+                   "a.cool.grass" = "C3 grass",
+                   "p.coo.grass" = "C3 grass",
+                   "p.warm.grass" = "C4 grass",
+                   "forb" = "forb")
+  pft_prime <- prime_PFT(x)
+  out <- pft4_lookup[pft_prime]
+  out <- factor(out, levels = unique(pft4_lookup))
+
+  #stopifnot(all(!is.na(out)))
+  out
+}
+
+#' Three main PFTs
+#'
+#' @param x vector of original 10 PFTs
+#'
+#' @return vector with 4 PFTs (C3 and C4 grasses combined)
+#' @export
+PFT_three <- function(x) {
+  pft3_lookup <- c("shrub" = "shrub",
+                   "C3 grass" = "grass",
+                   "C4 grass" = "grass",
+                   "forb" = "forb")
+  pft4 <- PFT_four(x)
+  out <- pft3_lookup[pft4]
+  out <- factor(out, levels = unique(pft3_lookup))
+  #stopifnot(all(!is.na(out)))
+  out
+}
+
+
 # conditional_texture --------------------------------------------------------
 
 
