@@ -27,10 +27,6 @@ aridity1 <- read_csv("data-processed/aridity_by_site.csv")
 
 # functions ---------------------------------------------------------------
 
-# quantiles
-q1 <- function(x) quantile(x, 0.05, na.rm = TRUE)
-q2 <- function(x) quantile(x, 0.95, na.rm = TRUE)
-
 cut_aridity <- function(x) {
   cut(x,
       breaks = c(0, 0.3, 0.5, 100),

@@ -320,3 +320,7 @@ mutate_pft_cols <- function(df) {
 }
 
 
+# quantiles ---------------------------------------------------------------
+
+q1 <- function(x) quantile(x, 0.05, na.rm = TRUE)
+q2 <- function(x) quantile(x, 0.95, na.rm = TRUE)

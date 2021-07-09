@@ -12,7 +12,6 @@
 library(tidyverse)
 source("scripts/functions.R")
 
-
 # read in data ------------------------------------------------------------
 
 # aridity
@@ -127,3 +126,17 @@ lyr_pft_diff1 <- lyr_pft1 %>%
   left_join(aridity1, by = "site")
 
 
+# descriptive stats -------------------------------------------------------
+q1
+# overview for question 1 of results sections
+tot_transp_diff %>%
+  filter(warm == "ambient") %>%
+  group_by(SoilTreatment, intensity) %>%
+  summarize(
+    n = n(),
+    perc_pos = sum(TRANSP_diff > 0)/n*100,
+    TRANSP_diff_m = mean(TRANSP_diff), # mean diff
+    TRANSP_perc_diff_m = mean(TRANSP_perc_diff), # mean of percent diff
+    TRANSP_diff_lwr = q1(TRANSP_diff), # 5th and 95th percentiles
+    TRANSP_diff_upr = q2(TRANSP_diff),
+  )
