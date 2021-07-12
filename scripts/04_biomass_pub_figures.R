@@ -100,7 +100,7 @@ dev.off()
 # biomass change vs aridity -----------------------------------------------
 
 # choosing 1 intensity and 1 warming level
-jpeg("figures/biomass/pub_figs/BIOARID_bio_vs_aridity.jpeg",
+jpeg("figures/biomass/pub_qual/BIOARID_bio_vs_aridity.jpeg",
      res = 600,  height = 5,  width = 5, units = 'in')
 
 df_list$pft4 %>%
@@ -118,4 +118,34 @@ df_list$pft4 %>%
 dev.off()
 
 
+# * no warming, PFT3 ------------------------------------------------------
+# delta biomass vs aridity, for 3 PFTs for each intensity trmt
+# 0 warming/loam
+bio_pft3_diff_0l <- bio_pft3_diff %>%
+  filter(warm == "ambient",
+         intensity != "ambient",
+         SoilTreatment == "loam") %>%
+  mutate(PFT = factor(PFT, levels = c("shrub", "grass", "forb")))
 
+# wide format for powerpoint
+jpeg("figures/biomass/pub_qual/BIOPFTARID_pft3_wide.jpeg", res = 600,
+     height = 3, width = 6.5, units = 'in')
+
+  # 3 panels, transpiration for shrubs, grasses and forbs
+
+g <- ggplot(bio_pft3_diff_0l, aes(x = aridity_index, color = intensity)) +
+  scale_color_manual(values = cols_intensity) +
+  labs(x = aridity_lab,
+       y = bio_lab1_change) +
+  geom_hline(yintercept = 0, linetype = 2,
+             alpha = 0.7) +
+  theme(legend.title = element_blank(),
+        legend.position = "top") +
+  lemon::facet_rep_wrap(~PFT, scales = "free_y", nrow = 1) +
+  geom_point(aes(y = bio_diff), size = 0.5) +
+  geom_smooth(aes(y = bio_diff), se = FALSE)
+g
+dev.off()
+
+
+# Next create 4 pft biomass figure

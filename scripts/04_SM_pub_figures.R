@@ -60,7 +60,7 @@ jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth.jpg",
      height = 5,
      width = 2.5,
      units = 'in')
-ggplot(lyr_all_diff_0l,
+g <- ggplot(lyr_all_diff_0l,
        aes(x = -depth, y = TRANSP_diff)) +
   geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
   geom_boxplot(aes(group = -depth, color = intensity),
@@ -76,6 +76,16 @@ ggplot(lyr_all_diff_0l,
        y = "Transpiration change (cm)") +
   scale_color_manual(values = cols_intensity) +
   theme(legend.position = "none")
+g
+dev.off()
+
+jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth_wide.jpg",
+     res = 600,
+     height = 2,
+     width = 5,
+     units = 'in')
+
+g +lemon::facet_rep_wrap(~intensity, nrow = 1)
 dev.off()
 
 # DOY vs transp and wetday ----------------------------------------------
@@ -247,16 +257,30 @@ grid.arrange(legend_intensity,
              heights = c(2, 10, 10))
 dev.off()
 
+jpeg("figures/soil_moisture/pub_qual/ETDRAIN_E-T-and-drain_vs_arid_wide.jpeg", res = 600,
+     height = 3, width = 6.5, units = 'in')
+
+lay_wide <- lay <- rbind(c(1, 1, 1),
+                         c(2, 3, 4))
+grid.arrange(legend_intensity,
+             g_transp,
+             g_evap,
+             g_drain,
+             layout_matrix = lay_wide,
+             heights = c(3, 10))
+dev.off()
+
 # aridity vs PFT transp -------------------------------------------------
 
 # 3 panels, transpiration for shrubs, grasses and forbs
 jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
      height = 4, width = 4, units = 'in')
-tot_transp_pft_diff %>%
+g <- tot_transp_pft_diff %>%
   filter(SoilTreatment == "loam",
          warm == "ambient",
          PFT != "total") %>%
-  mutate(PFT = factor(PFT, levels = c("shrub", "grass", "forbs"))) %>%
+  mutate(PFT = factor(PFT, levels = c("shrub", "grass", "forbs"),
+                      labels = c("shrub", "grass", "forb"))) %>%
   ggplot(aes(x = aridity_index, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   labs(x = aridity_lab,
@@ -268,4 +292,33 @@ tot_transp_pft_diff %>%
   lemon::facet_rep_wrap(~PFT, scales = "free_y", ncol = 2) +
   geom_point(aes(y = TRANSP_diff), size = 0.5) +
   geom_smooth(aes(y = TRANSP_diff), se = FALSE)
+g
 dev.off()
+
+# wide format--for powerpoint
+jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid_wide.jpeg", res = 600,
+     height = 3, width = 6.5, units = 'in')
+g +
+  lemon::facet_rep_wrap(~PFT, scales = "free_y", nrow = 1)
+
+
+dev.off()
+
+
+# drain vs evap -----------------------------------------------------------
+
+ggplot(tot_transp_diff_0l, aes(drain_diff, EVAPTOT_diff, color = TRANSP_diff > 0)) +
+  geom_point() +
+  geom_abline(slope = -1, intercept = 0) +
+  facet_wrap(~intensity, nrow = 2)
+
+ggplot(tot_transp_diff_0l, aes(aridity_index, drain_diff  + EVAPTOT_diff)) +
+  geom_point() +
+  geom_hline(yintercept = 0) +
+  #geom_abline(slope = -1, intercept = 0) +
+  facet_wrap(~intensity, nrow = 2)
+
+ggplot(tot_transp_diff_0l, aes(TRANSP_diff, drain_diff  + EVAPTOT_diff)) +
+  geom_point() +
+  geom_abline(slope = -1, intercept = 0) +
+  facet_wrap(~intensity, nrow = 2)

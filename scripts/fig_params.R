@@ -70,6 +70,7 @@ wetday_prop_lab0 <- "Proportion wet days (days > -1.5 MPa)"
 # biomass
 bio_lab0 <- expression("Biomass ("*gm^-2*")")
 bio_lab1 <- expression(Biomass[trmt]~-~Biomass[control]~"("*gm^-2*")")
+bio_lab1_change <- expression("Biomass change ("*g~m^-2*")")
 bio_lab2 <- expression("%"~Biomass~change~"("*frac("trmt - ctrl","ctrl")~"*100)")
 
 # misc.
