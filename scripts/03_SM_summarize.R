@@ -127,11 +127,16 @@ lyr_pft_diff1 <- lyr_pft1 %>%
 
 
 # descriptive stats -------------------------------------------------------
-q1
 # overview for question 1 of results sections
-tot_transp_diff %>%
+descript <- tot_transp_diff %>%
   filter(warm == "ambient") %>%
   group_by(SoilTreatment, intensity) %>%
+  # sum of delta drainage and evap
+  mutate(edrain_diff = drain_diff + EVAPTOT_diff,
+         # did site follow expected trend (if water loss (drain + evap) went
+         # down transp went up, and vice versa?)
+         edrain_transp_trend = (edrain_diff >= 0 & TRANSP_diff <= 0) |
+           (edrain_diff < 0 & TRANSP_diff > 0)) %>%
   summarize(
     n = n(),
     perc_pos = sum(TRANSP_diff > 0)/n*100,
@@ -139,4 +144,16 @@ tot_transp_diff %>%
     TRANSP_perc_diff_m = mean(TRANSP_perc_diff), # mean of percent diff
     TRANSP_diff_lwr = q1(TRANSP_diff), # 5th and 95th percentiles
     TRANSP_diff_upr = q2(TRANSP_diff),
+    transp_diff_gt0 = sum(TRANSP_diff >0),
+    expected_trend = sum(edrain_transp_trend)
+
   )
+
+descript
+#view(descript)
+
+# % sites with decrease in water loss and and increase in transp or vice versa
+descript %>%
+  # avg across intensity trmts
+  group_by(SoilTreatment) %>%
+  summarize(perc_expected_trend = sum(expected_trend)/sum(n))
