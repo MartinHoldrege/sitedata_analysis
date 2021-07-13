@@ -58,7 +58,7 @@ box_base <- function() {
     theme(legend.position = "top",
           legend.title = element_blank(),
           axis.text.x = element_text(angle = 45, vjust = 0.5)),
-    guides(fill = guide_legend(ncol = 2)),
+    guides(fill = guide_legend(nrow = 2, byrow = TRUE)),
     labs(x = "Treatment")
   )
 }
@@ -96,6 +96,19 @@ pdf("figures/biomass/bio_boxplots_by_pft_v1.pdf",
 figs
 dev.off()
 
+
+# * just biomass response -------------------------------------------------
+# simple figure for ESA talk
+
+jpeg("figures/biomass/pub_qual/boxplot_shrub.jpeg",
+     res = 600,  height = 4,  width = 5, units = 'in')
+df_list$pft3 %>%
+  filter(PFT == "shrub") %>%
+  ggplot(aes(x = trmt_lab, y = bio_diff, fill = trmt_group)) +
+  box_base() +
+  #lemon::facet_rep_wrap(~ PFT, ncol = 1, scales = "free_y") +
+  labs(y = bio_lab1_change)
+dev.off()
 
 # biomass change vs aridity -----------------------------------------------
 
