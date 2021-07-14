@@ -48,8 +48,11 @@ lyr_pft1 <- lyr_pft1 %>%
 all2 <- all1 %>%
   mutate(SoilTreatment = soil_name(SoilTreatment)) %>%
   rename(EVAPSURFACE = EVAPSURFACE_evap_total_Mean,
-         drain = DEEPSWC_lowLayerDrain_cm_Mean) %>%
-  select(site, SoilTreatment, intensity, warm, EVAPSURFACE, drain) %>%
+         drain = DEEPSWC_lowLayerDrain_cm_Mean,
+         RUNOFF = RUNOFF_net_Mean,
+         SNOWLOSS = PRECIP_snowloss_Mean) %>%
+  select(site, SoilTreatment, intensity, warm, EVAPSURFACE, drain, RUNOFF,
+         SNOWLOSS) %>%
   trmts2factors()
 
 
@@ -66,7 +69,7 @@ tot_transp <- lyr_all1 %>%
   left_join(aridity1, by = "site") %>%
   left_join(all2, by = c("site", "intensity", "warm", "SoilTreatment")) %>%
   # total evaporation
-  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE,
+  mutate(EVAPTOT = EVAPSOIL + EVAPSURFACE + SNOWLOSS,
          AET = TRANSP + EVAPTOT, # actual evapotranspiration
          T_AET = TRANSP/AET) # T/AET ratio
 
@@ -136,7 +139,11 @@ descript <- tot_transp_diff %>%
          # did site follow expected trend (if water loss (drain + evap) went
          # down transp went up, and vice versa?)
          edrain_transp_trend = (edrain_diff >= 0 & TRANSP_diff <= 0) |
-           (edrain_diff < 0 & TRANSP_diff > 0)) %>%
+           (edrain_diff < 0 & TRANSP_diff > 0),
+         # percent of MAP that is going to AET and drainage (~88%)
+         # the rest is going to snoloss
+         ETDRAIN_perc = (AET + drain)/PRECIP_ppt_Mean *100,
+         SNOWLOSS_perc = SNOWLOSS/PRECIP_ppt_Mean *100) %>%
   summarize(
     n = n(),
     perc_pos = sum(TRANSP_diff > 0)/n*100,
@@ -145,11 +152,16 @@ descript <- tot_transp_diff %>%
     TRANSP_diff_lwr = q1(TRANSP_diff), # 5th and 95th percentiles
     TRANSP_diff_upr = q2(TRANSP_diff),
     transp_diff_gt0 = sum(TRANSP_diff >0),
-    expected_trend = sum(edrain_transp_trend)
+    expected_trend = sum(edrain_transp_trend),
+    ETDRAIN_perc = mean(ETDRAIN_perc),
+    SNOWLOSS_perc = mean(SNOWLOSS_perc)
 
   )
 
 descript
+descript$ETDRAIN_perc %>% mean()
+descript %>%
+  select(matches("perc"))
 #view(descript)
 
 # % sites with decrease in water loss and and increase in transp or vice versa
