@@ -324,3 +324,13 @@ mutate_pft_cols <- function(df) {
 
 q1 <- function(x) quantile(x, 0.05, na.rm = TRUE)
 q2 <- function(x) quantile(x, 0.95, na.rm = TRUE)
+
+
+# predict -----------------------------------------------------------------
+
+
+# return newdata dataframe along with prediction
+predict_newdata <- function(mod, newdata) {
+  newdata$yhat <- predict(mod, newdata = newdata)
+  return(newdata)
+}

@@ -76,6 +76,10 @@ bio_transp_diff1 <- bio_transp1 %>%
                             "9.5C threshold crossed", "threshold not crossed")) %>%
   select(-thresh)
 
+# total biomass and transp changes (i.e. across PFTs)
+tot_bio_transp_diff <- tot_transp_diff %>%
+  select(site, intensity, warm, SoilTreatment, TRANSP_diff) %>%
+  left_join(bio_tot_diff1, by = c("site", "intensity", "warm", "SoilTreatment"))
 
 # fig themes --------------------------------------------------------------
 
@@ -181,3 +185,13 @@ bio_transp_diff1 %>%
        subtitle = "Grass % biomass change vs % transpiration change")
 
 dev.off()
+
+
+# R2--transp vs bio diff --------------------------------------------------
+
+# relationship between change in transpiration and change in biomass (across
+# all PFTs), for all 3 intensity treatments
+tot_bio_transp_diff %>%
+  filter(SoilTreatment == "loam", warm == "ambient") %>%
+  lm(TRANSP_diff ~ bio_diff, data = .) %>%
+  summary()

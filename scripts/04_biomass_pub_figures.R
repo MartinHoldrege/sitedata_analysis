@@ -50,10 +50,10 @@ create_trmt_labels <- function(df) {
 }
 
 cols_group <- c("#377eb8", "#e41a1c", "#984ea3")
-box_base <- function() {
+box_base <- function(outlier.size = 1.5) {
   list(
     geom_hline(yintercept = 0, linetype = 2, alpha = 0.7),
-    geom_boxplot(),
+    geom_boxplot(outlier.size = outlier.size),
     scale_fill_manual(values = cols_group),
     theme(legend.position = "top",
           legend.title = element_blank(),
@@ -97,17 +97,19 @@ figs
 dev.off()
 
 
-# * just biomass response -------------------------------------------------
-# simple figure for ESA talk
+# * just biomass response for pft4-------------------------------------------
+# figure 7 for manuscirpt
 
-jpeg("figures/biomass/pub_qual/boxplot_shrub.jpeg",
-     res = 600,  height = 4,  width = 5, units = 'in')
-df_list$pft3 %>%
-  filter(PFT == "shrub") %>%
-  ggplot(aes(x = trmt_lab, y = bio_diff, fill = trmt_group)) +
-  box_base() +
-  #lemon::facet_rep_wrap(~ PFT, ncol = 1, scales = "free_y") +
-  labs(y = bio_lab1_change)
+jpeg("figures/biomass/pub_qual/boxplot_pft4.jpeg",
+     res = 600,  height = 6,  width = 3, units = 'in')
+
+ggplot(df_list$pft4, aes(x = trmt_lab, y = bio_diff, fill = trmt_group)) +
+  box_base(outlier.size = 0.75) +
+  lemon::facet_rep_wrap(~ PFT, ncol = 1, scales = "free_y") +
+  labs(y = bio_lab1_change) +
+  theme(legend.text = element_text(size = 10),
+        axis.title = element_text(size = 13)) +
+  guides(fill = guide_legend(ncol = 1))
 dev.off()
 
 # biomass change vs aridity -----------------------------------------------
@@ -160,5 +162,29 @@ g <- ggplot(bio_pft3_diff_0l, aes(x = aridity_index, color = intensity)) +
 g
 dev.off()
 
+# * no warming, PFT4 ------------------------------------------------------
+# delta biomass vs aridity, for 3 PFTs for each intensity trmt
+# 0 warming/loam
+bio_pft4_diff_0l <- bio_pft4_diff %>%
+  filter(warm == "ambient",
+         intensity != "ambient",
+         SoilTreatment == "loam")
 
-# Next create 4 pft biomass figure
+# wide format for powerpoint
+jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4.jpeg", res = 600,
+     height = 4, width = 4, units = 'in')
+
+g <- ggplot(bio_pft4_diff_0l,
+            aes(x = aridity_index, y = bio_diff, color = intensity)) +
+  scale_color_manual(values = cols_intensity) +
+  labs(x = aridity_lab,
+       y = bio_lab1_change) +
+  geom_hline(yintercept = 0, linetype = 2,
+             alpha = 0.7) +
+  theme(legend.title = element_blank(),
+        legend.position = "top") +
+  lemon::facet_rep_wrap(~PFT, scales = "free_y", ncol = 2) +
+  geom_point(size = 0.5) +
+  geom_smooth(se = FALSE)
+g
+dev.off()

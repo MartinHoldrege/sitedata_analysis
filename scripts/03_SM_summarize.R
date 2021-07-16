@@ -130,6 +130,7 @@ lyr_pft_diff1 <- lyr_pft1 %>%
 
 
 # descriptive stats -------------------------------------------------------
+
 # overview for question 1 of results sections
 descript <- tot_transp_diff %>%
   filter(warm == "ambient") %>%
@@ -169,3 +170,73 @@ descript %>%
   # avg across intensity trmts
   group_by(SoilTreatment) %>%
   summarize(perc_expected_trend = sum(expected_trend)/sum(n))
+
+# percent of total transpiration that is by shrubs
+tot_transp_pft %>%
+  group_by(site, intensity, warm, SoilTreatment) %>%
+  mutate(shrub_transp_perc = TRANSP[PFT == "shrub"]/TRANSP[PFT == "total"]) %>%
+  filter(PFT == "shrub") %>%
+  group_by(intensity, warm, SoilTreatment) %>%
+  summarize(shrub_transp_perc = mean(shrub_transp_perc))
+
+# fitting loess curves ----------------------------------------------------
+
+# geom_smooth uses stats::loess, which is what I'm using here
+
+
+# * transp by PFT and total --------------------------------------------------
+# dataframe includes both total transp and transp by pft
+
+arid_range <- range(aridity1$aridity_index)
+
+# so predictions are just inside the range of the data
+arid_range <-  round(arid_range, 3) + c(0.001, -0.001)
+# continuous data to predict on
+newdata <- tibble(
+  aridity_index = seq(from = arid_range[1], to = arid_range[2], by = 0.001)
+)
+
+yhat_pft_transp <- tot_transp_pft_diff %>%
+  filter(warm == "ambient", SoilTreatment == "loam") %>%
+  group_by(intensity, PFT) %>%
+  nest() %>%
+  # fitting loess curves
+  mutate(mod = map(data, function(df) {
+    loess(TRANSP_diff ~ aridity_index, data = df)
+  }),
+  # model for percent change
+  mod_perc = map(data, function(df) {
+    loess(TRANSP_perc_diff ~ aridity_index, data = df)
+  }),
+  yhat = map(mod, predict_newdata, newdata = newdata),
+  yhat_perc = map(mod_perc, predict, newdata = newdata),
+  evap_yhat ) %>%
+  select(-mod, -data, -mod_perc) %>%
+  unnest(cols = c(yhat, yhat_perc)) %>%
+  # absolute value
+  mutate(yhat_abs = abs(yhat),
+         yhat_perc_abs = abs(yhat_perc))
+
+# summary of predicted transp changes by pft
+yhat_pft_transp_sum <- yhat_pft_transp %>%
+  summarize(
+    # max predicted transp_diff
+    max_yhat = max(yhat),
+    # max_predicted % diff
+    max_yhat_perc = max(yhat_perc),
+    # aridity and max predicted
+    arid_max_yhat = mean(aridity_index[yhat == max_yhat]),
+    arid_min_yhat = mean(aridity_index[yhat == min(yhat)]),
+    # 'transition' or 'threshold' point. constraining to range of interest,
+    # so don't get where 'tail' crosses over 0 twice
+    arid_0_yhat = mean(aridity_index[yhat_abs == min(yhat_abs[aridity_index < 0.8]) &
+                                       aridity_index < 0.8 &
+                                       aridity_index > 0.3])
+  )
+yhat_pft_transp_sum
+
+# aridity index at which predicted grass transp responses were most negative
+yhat_pft_transp_sum %>%
+  filter(PFT == 'grass') %>%
+  pull(arid_min_yhat) %>%
+  mean()

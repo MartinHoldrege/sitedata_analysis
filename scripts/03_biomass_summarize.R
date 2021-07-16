@@ -29,6 +29,22 @@ bio1 <- bio1 %>%
   left_join(aridity1, by = "site")
 # * biomass ---------------------------------------------------------------
 
+# change in total biomass
+bio_tot_diff1 <- bio1 %>%
+  # primary pft groups
+  mutate(prime_PFT = prime_PFT(PFT)) %>%
+  # just a way to filter out individual species, so not double counting
+  # biomass
+  filter(!is.na(.data$prime_PFT)) %>%
+  group_by(site, SoilTreatment, warm, intensity) %>%
+  summarize(biomass = sum(biomass)) %>%
+  group_by(site, SoilTreatment) %>%
+  mutate(# difference in biomass
+    bio_diff = calc_diff(biomass, intensity, warm),
+    bio_perc_diff = calc_perc_diff(biomass, intensity, warm)) %>%
+  filter(!(intensity == "ambient" & warm == "ambient"))
+
+
 # biomass difference for each PFT
 bio_PFT_diff1 <- bio1 %>%
   group_by(site, SoilTreatment, PFT) %>%
@@ -113,3 +129,75 @@ bio_pft3_diff <- bio1 %>%
     bio_perc_diff = calc_perc_diff(biomass, intensity, warm)) %>%
   filter(!(intensity == "ambient" & warm == "ambient")) %>%
   select(-biomass)
+
+
+# summary statistics ------------------------------------------------------
+
+pft4_summary <- bio_pft4_diff %>%
+  filter(SoilTreatment == "loam") %>%
+  group_by(intensity, warm, PFT) %>%
+  summarize_at(.vars = c("bio_diff", "bio_perc_diff"),
+               .funs = list(~mean(., na.rm = TRUE), lwr = q1, upr = q2))
+pft4_summary
+pft4_summary %>%
+  filter(warm == "3C warming") %>%
+  select(matches("perc"), everything()) %>%
+  print.data.frame()
+
+(69.7 - 37.4)/37.4*100
+# fitting loess curves ----------------------------------------------------
+
+# geom_smooth uses stats::loess, which is what I'm using here
+
+
+# * bio by PFT --------------------------------------------------
+# dataframe includes both total transp and transp by pft
+
+arid_range <- range(aridity1$aridity_index)
+
+# so predictions are just inside the range of the data
+arid_range <-  round(arid_range, 3) + c(0.001, -0.001)
+# continuous data to predict on
+newdata <- tibble(
+  aridity_index = seq(from = arid_range[1], to = arid_range[2], by = 0.001)
+)
+
+yhat_pft_bio <- bio_pft4_diff %>%
+  filter(warm == "ambient", SoilTreatment == "loam") %>%
+  group_by(intensity, PFT) %>%
+  nest() %>%
+  # fitting loess curve
+  mutate(mod = map(data, function(df) {
+    loess(bio_diff ~ aridity_index, data = df)
+  }),
+  # model for percent change
+  mod_perc = map(data, function(df) {
+    loess(bio_perc_diff ~ aridity_index, data = df)
+  }),
+  yhat = map(mod, predict_newdata, newdata = newdata),
+  yhat_perc = map(mod_perc, predict, newdata = newdata)) %>%
+  select(-mod, -data, -mod_perc) %>%
+  unnest(cols = c(yhat, yhat_perc)) %>%
+  # absolute value
+  mutate(yhat_abs = abs(yhat),
+         yhat_perc_abs = abs(yhat_perc))
+
+# summary of predicted bio changes by pft
+yhat_pft_bio %>%
+  summarize(
+    # max predicted bio_diff
+    max_yhat = max(yhat),
+    min_yhat = min(yhat),
+    # max_predicted % diff
+    max_yhat_perc = max(yhat_perc),
+    min_yhat_perc = min(yhat_perc),
+    # aridity and max predicted
+    arid_max_yhat = mean(aridity_index[yhat == max_yhat]),
+    arid_min_yhat = mean(aridity_index[yhat == min_yhat]),
+    # 'transition' or 'threshold' point. constraining to range of interest,
+    # so don't get where 'tail' crosses over 0 twice.
+    # aridity at which predicted value is 0.
+    arid_0_yhat = mean(aridity_index[yhat_abs == min(yhat_abs[aridity_index < 0.8]) &
+                                       aridity_index < 0.8 &
+                                       aridity_index > 0.3])
+  )
