@@ -152,6 +152,8 @@ descript <- tot_transp_diff %>%
     TRANSP_perc_diff_m = mean(TRANSP_perc_diff), # mean of percent diff
     TRANSP_diff_lwr = q1(TRANSP_diff), # 5th and 95th percentiles
     TRANSP_diff_upr = q2(TRANSP_diff),
+    TRANSP_perc_diff_lwr = q1(TRANSP_perc_diff), # 5th and 95th percentiles
+    TRANSP_perc_diff_upr = q2(TRANSP_perc_diff),
     transp_diff_gt0 = sum(TRANSP_diff >0),
     expected_trend = sum(edrain_transp_trend),
     ETDRAIN_perc = mean(ETDRAIN_perc),
@@ -162,7 +164,8 @@ descript <- tot_transp_diff %>%
 descript
 descript$ETDRAIN_perc %>% mean()
 descript %>%
-  select(matches("perc"))
+  filter(SoilTreatment == 'loam') %>%
+  select(intensity, matches("perc"))
 #view(descript)
 
 # % sites with decrease in water loss and and increase in transp or vice versa
@@ -209,8 +212,7 @@ yhat_pft_transp <- tot_transp_pft_diff %>%
     loess(TRANSP_perc_diff ~ aridity_index, data = df)
   }),
   yhat = map(mod, predict_newdata, newdata = newdata),
-  yhat_perc = map(mod_perc, predict, newdata = newdata),
-  evap_yhat ) %>%
+  yhat_perc = map(mod_perc, predict, newdata = newdata)) %>%
   select(-mod, -data, -mod_perc) %>%
   unnest(cols = c(yhat, yhat_perc)) %>%
   # absolute value

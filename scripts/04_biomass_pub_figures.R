@@ -174,6 +174,18 @@ bio_pft4_diff_0l <- bio_pft4_diff %>%
 jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4.jpeg", res = 600,
      height = 4, width = 4, units = 'in')
 
+# defining locationgs of breaks
+breaks_fun <- function(x) {
+  out <- if (max(x) > 100) {
+    c(-50, 0, 50, 100, 150)
+  } else if (max(x) < 5) {
+    c(-4, -2, 0, 2, 4)
+  } else {
+    c(-10, -5, 0, 5, 10)
+  }
+  out
+}
+
 g <- ggplot(bio_pft4_diff_0l,
             aes(x = aridity_index, y = bio_diff, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
@@ -185,6 +197,7 @@ g <- ggplot(bio_pft4_diff_0l,
         legend.position = "top") +
   lemon::facet_rep_wrap(~PFT, scales = "free_y", ncol = 2) +
   geom_point(size = 0.5) +
+  scale_y_continuous(breaks = breaks_fun) +
   geom_smooth(se = FALSE)
 g
 dev.off()

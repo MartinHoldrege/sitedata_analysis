@@ -136,9 +136,14 @@ bio_pft3_diff <- bio1 %>%
 pft4_summary <- bio_pft4_diff %>%
   filter(SoilTreatment == "loam") %>%
   group_by(intensity, warm, PFT) %>%
+  # because c4 grasses sometimes when from 0 biomass to some biomass
+  # there are many infinite % changes
+  mutate(bio_perc_diff = ifelse(is.infinite(bio_perc_diff),
+                                NA, bio_perc_diff)) %>%
   summarize_at(.vars = c("bio_diff", "bio_perc_diff"),
                .funs = list(~mean(., na.rm = TRUE), lwr = q1, upr = q2))
-pft4_summary
+pft4_summary %>%
+  filter(warm == "ambient", intensity == "2x intensity")
 pft4_summary %>%
   filter(warm == "3C warming") %>%
   select(matches("perc"), everything()) %>%
