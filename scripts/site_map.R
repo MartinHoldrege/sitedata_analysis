@@ -23,6 +23,11 @@ site1 <- readxl::read_xlsx("../dbWeather/200sites.xlsx")
 # tiff of global aridity index based on data from 1970-2000
 r1 <- raster("data-raw/aridity_index/ai_et0/ai_et0.tif")
 
+# aridity (generated in climate script)--aridity of individual sites
+# calculated from stepwat output
+aridity1 <- read_csv("data-processed/aridity_by_site.csv")%>%
+  dplyr::select(-matches("_SD$"))
+
 
 # * cover data ------------------------------------------------------------
 
@@ -40,8 +45,6 @@ site2 <- site1[ , c("site_id", "X_WGS84", "Y_WGS84")]
 
 # is  unprojected wgs 84
 crs <- r1@crs
-
-
 
 # r2 <- r1*0.0001
 
@@ -86,6 +89,19 @@ sites_text <- site3[!is.na(x)] # sites that have texture data
 
 # % sites outside soil data:
 length(sites_text)/length(site3)*100
+
+
+# compare aridity index values --------------------------------------------
+# gridded product vs stepwat
+site4 <- site2
+site4$aridity_gridded <- extract(r3, site3)
+site4 <- site4 %>%
+  left_join(aridity1, by = c("site_id" = "site"))
+
+plot(aridity_index ~ aridity_gridded, data = site4,
+     xlab = "aridity (gridded product)",
+     ylab = "aridity (STEPWAT2)")
+abline(0, 1)
 
 # map ---------------------------------------------------------------------
 
