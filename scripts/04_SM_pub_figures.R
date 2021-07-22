@@ -55,6 +55,10 @@ theme_update(strip.background = element_blank(),
 breaks <- c(0, -50, -100)
 break_labels <- as.character(-breaks)
 
+
+# * only loam -------------------------------------------------------------
+
+
 jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth.jpg",
      res = 600,
      height = 5,
@@ -86,6 +90,35 @@ jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth_wide.jpg",
      units = 'in')
 
 g +lemon::facet_rep_wrap(~intensity, nrow = 1)
+dev.off()
+
+
+# * by soil texture -------------------------------------------------------
+
+jpeg("figures/soil_moisture/pub_qual/TBOXSOIL_transp_v_depth.jpg",
+     res = 600,
+     height = 5,
+     width = 6,
+     units = 'in')
+
+lyr_all_diff1 %>%
+  filter(warm == "ambient") %>%
+  ggplot(aes(x = -depth, y = TRANSP_diff)) +
+  geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
+  geom_boxplot(aes(group = -depth, color = intensity),
+               outlier.size = 0.4, size = 0.8) +
+  stat_summary(fun = mean, geom = "line", color = "black", alpha = 0.7,
+               size = 0.8) +
+  stat_summary(fun = mean, geom = "point", color = "black", alpha = 0.7,
+               size = 0.8) +
+  coord_flip() +
+  lemon::facet_rep_grid(intensity~SoilTreatment) +
+  scale_x_continuous(breaks = breaks, labels = break_labels) +
+  labs(x = depth_lab,
+       y = "Transpiration change (cm)") +
+  scale_color_manual(values = cols_intensity) +
+  theme(legend.position = "none")
+
 dev.off()
 
 # DOY vs transp and wetday ----------------------------------------------
