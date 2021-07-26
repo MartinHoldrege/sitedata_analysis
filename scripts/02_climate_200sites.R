@@ -14,8 +14,9 @@ theme_set(theme_classic())
 # load data ---------------------------------------------------------------
 
 # means by site/intensity/soil of sw2_yearly table
-sw2_yrly1 <- readr::read_csv("data-processed/site_means/sw2_yr_means_v1.csv")
+sw2_yrly1 <- read_csv("data-processed/site_means/sw2_yr_means_v1.csv")
 
+sw2_mo1 <- read_csv("data-processed/site_means/sw2_mo_means_v1.csv")
 # process -----------------------------------------------------------------
 
 cols <- str_subset(names(sw2_yrly1), "TEMP_(min|avg|max)|PRECIP_ppt|PET_pet_cm")
@@ -62,10 +63,30 @@ sd_means
 # 3 1.5x intensity        33.6
 # 4 2x intensity          60.8
 
+
+# * seasonality -----------------------------------------------------------
+
+seas <- sw2_mo1 %>%
+  filter(SoilTreatment == "loam",
+         intensity == "ambient",
+         warm == "ambient") %>%
+         # growing season only.
+  group_by(site) %>%
+  summarize( # growing season ppt
+    # growing season threshold 4.4 C as described in Sims et al. 1978 Journal of
+    # Ecology
+    seas_ppt = sum(PRECIP_ppt_Mean[TEMP_avg_C_Mean >= 4.4]),
+    # CV of monthly precipitation
+    ppt_mo_CV = sd(PRECIP_ppt_Mean)/mean(PRECIP_ppt_Mean*100),
+    .groups = "drop")
+
 # * aridity index/climate -------------------------------------------------
 
 aridity1 <- amb_means %>%
-  mutate(aridity_index = PRECIP_ppt_Mean/PET_pet_cm_Mean)
+  mutate(aridity_index = PRECIP_ppt_Mean/PET_pet_cm_Mean) %>%
+  left_join(seas, by = "site") %>%
+  # proportion of ppt that falls during the growing season
+  mutate(prop_seas_ppt = seas_ppt/PRECIP_ppt_Mean)
 
 write_csv(aridity1, "data-processed/aridity_by_site.csv")
 

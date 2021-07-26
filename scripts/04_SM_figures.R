@@ -209,6 +209,20 @@ map(fgs, function(x) {
 })
 
 
+# ** residual -------------------------------------------------------------
+
+yhat_pft_transp_orig %>%
+  filter(intensity == "2x intensity") %>%
+  ggplot(aes(prop_seas_ppt, resid)) +
+  geom_point() +
+  geom_hline(yintercept = 0, linetype = 2) +
+  facet_wrap(~PFT, scales = "free_y") +
+  geom_smooth(method = "lm") +
+  labs(y = "Residual (cm of transpired water)",
+       x = "Proportion of MAP occuring during growing season",
+       subtitle = "Residuals from transpiration change ~ aridity LOESS",
+       caption = "2x intensity and ambient warming simulation")
+
 # * drainage --------------------------------------------------------------
 g +
   geom_point(aes(x = aridity_index, y = drain_diff)) +

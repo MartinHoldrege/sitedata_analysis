@@ -183,9 +183,9 @@ tot_transp_pft %>%
   summarize(shrub_transp_perc = mean(shrub_transp_perc))
 
 # fitting loess curves ----------------------------------------------------
+# Next: look at residuals and regress against seasonality
 
 # geom_smooth uses stats::loess, which is what I'm using here
-
 
 # * transp by PFT and total --------------------------------------------------
 # dataframe includes both total transp and transp by pft
@@ -199,7 +199,7 @@ newdata <- tibble(
   aridity_index = seq(from = arid_range[1], to = arid_range[2], by = 0.001)
 )
 
-yhat_pft_transp <- tot_transp_pft_diff %>%
+yhat_pft_transp0 <- tot_transp_pft_diff %>%
   filter(warm == "ambient", SoilTreatment == "loam") %>%
   group_by(intensity, PFT) %>%
   nest() %>%
@@ -211,9 +211,23 @@ yhat_pft_transp <- tot_transp_pft_diff %>%
   mod_perc = map(data, function(df) {
     loess(TRANSP_perc_diff ~ aridity_index, data = df)
   }),
+  # predicting for original x data
+  yhat_orig = map(mod, predict),
+  # predicting on 'continuous' data
   yhat = map(mod, predict_newdata, newdata = newdata),
-  yhat_perc = map(mod_perc, predict, newdata = newdata)) %>%
-  select(-mod, -data, -mod_perc) %>%
+  yhat_perc = map(mod_perc, predict, newdata = newdata))
+
+
+
+# original x values
+yhat_pft_transp_orig <- yhat_pft_transp0 %>%
+  select(-yhat, -yhat_perc) %>%
+  unnest(cols = c(yhat_orig, data)) %>%
+  mutate(resid = TRANSP_diff - yhat_orig)
+
+# 'continous x'
+yhat_pft_transp <- yhat_pft_transp0 %>%
+  select(-mod, -data, -mod_perc, -yhat_orig) %>%
   unnest(cols = c(yhat, yhat_perc)) %>%
   # absolute value
   mutate(yhat_abs = abs(yhat),
@@ -242,3 +256,6 @@ yhat_pft_transp_sum %>%
   filter(PFT == 'grass') %>%
   pull(arid_min_yhat) %>%
   mean()
+
+
+
