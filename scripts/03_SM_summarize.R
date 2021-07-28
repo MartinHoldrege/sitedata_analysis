@@ -157,15 +157,22 @@ descript <- tot_transp_diff %>%
     transp_diff_gt0 = sum(TRANSP_diff >0),
     expected_trend = sum(edrain_transp_trend),
     ETDRAIN_perc = mean(ETDRAIN_perc),
-    SNOWLOSS_perc = mean(SNOWLOSS_perc)
-
+    SNOWLOSS_perc = mean(SNOWLOSS_perc),
+    drain_diff_m = mean(drain_diff),
+    drain_perc_diff_m = mean(drain_perc_diff),
+    drain_perc_diff_lwr = q1(drain_perc_diff),
+    drain_perc_diff_upr = q2(drain_perc_diff),
+    EVAPTOT_diff_m = mean(EVAPTOT_diff),
+    EVAPTOT_perc_diff_m = mean(EVAPTOT_perc_diff),
+    EVAPTOT_perc_diff_lwr = q1(EVAPTOT_perc_diff),
+    EVAPTOT_perc_diff_upr = q2(EVAPTOT_perc_diff),
+    .groups = "drop"
   )
 
-descript
-descript$ETDRAIN_perc %>% mean()
+
 descript %>%
   filter(SoilTreatment == 'loam') %>%
-  select(intensity, matches("perc"))
+  select(intensity, matches("^drain|EVAPTOT"))
 #view(descript)
 
 # % sites with decrease in water loss and and increase in transp or vice versa

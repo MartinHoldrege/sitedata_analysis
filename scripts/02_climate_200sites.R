@@ -17,6 +17,7 @@ theme_set(theme_classic())
 sw2_yrly1 <- read_csv("data-processed/site_means/sw2_yr_means_v1.csv")
 
 sw2_mo1 <- read_csv("data-processed/site_means/sw2_mo_means_v1.csv")
+
 # process -----------------------------------------------------------------
 
 cols <- str_subset(names(sw2_yrly1), "TEMP_(min|avg|max)|PRECIP_ppt|PET_pet_cm")

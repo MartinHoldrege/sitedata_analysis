@@ -27,6 +27,7 @@ aridity1 <- read_csv("data-processed/aridity_by_site.csv")%>%
 bio1 <- bio1 %>%
   trmts2factors() %>%
   left_join(aridity1, by = "site")
+
 # * biomass ---------------------------------------------------------------
 
 # change in total biomass

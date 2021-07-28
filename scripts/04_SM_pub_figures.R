@@ -340,18 +340,36 @@ dev.off()
 
 # drain vs evap -----------------------------------------------------------
 
-ggplot(tot_transp_diff_0l, aes(drain_diff, EVAPTOT_diff, color = TRANSP_diff > 0)) +
+jpeg("figures/soil_moisture/pub_qual/DRAIN-EVAP.jpeg", res = 600,
+     height = 5, width = 5, units = 'in')
+tot_transp_diff_0l %>%
+  mutate(direction = ifelse(TRANSP_diff > 0,
+                            "Transpiration increased",
+                            "Transpiration decreased")) %>%
+  ggplot(aes(drain_diff, EVAPTOT_diff, shape = direction, color = direction)) +
   geom_point() +
   geom_abline(slope = -1, intercept = 0) +
-  facet_wrap(~intensity, nrow = 2)
+  lemon::facet_rep_wrap(~intensity, nrow = 2) +
+  labs(x = "Change in drainage (cm)",
+       y = "Change in evaporation (cm)") +
+  theme(legend.title = element_blank(),
+        legend.position = "top") +
+  scale_color_manual(values = c("Transpiration increased" = "dark blue",
+                                "Transpiration decreased" = "dark red"))
 
-ggplot(tot_transp_diff_0l, aes(aridity_index, drain_diff  + EVAPTOT_diff)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  #geom_abline(slope = -1, intercept = 0) +
-  facet_wrap(~intensity, nrow = 2)
-
-ggplot(tot_transp_diff_0l, aes(TRANSP_diff, drain_diff  + EVAPTOT_diff)) +
-  geom_point() +
-  geom_abline(slope = -1, intercept = 0) +
-  facet_wrap(~intensity, nrow = 2)
+dev.off()
+# tot_transp_diff_0l %>%
+#   ungroup() %>%
+#   mutate(loss = drain_diff + EVAPTOT_diff,
+#          diff = TRANSP_diff - loss) %>%
+#   pull(diff) %>%
+#   hist()
+# ggplot(tot_transp_diff_0l,
+#        aes(TRANSP_diff, EVAPTOT_diff + drain_diff)) +
+#   geom_point() +
+#   geom_abline(slope = -1, intercept = 0)
+#
+# ggplot(tot_transp_diff_0l,
+#        aes(PRECIP_ppt_Mean, TRANSP + EVAPTOT + drain)) +
+#   geom_point() +
+#   geom_abline(slope = 1, intercept = 0)
