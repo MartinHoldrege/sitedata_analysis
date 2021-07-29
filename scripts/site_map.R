@@ -168,7 +168,7 @@ tm_style(style = "white",
 dev.off()
 
 # map gridded MAP -----------------------------------------------------------
-
+# using gridded worldclim MAP
 jpeg("figures/maps/site_map_MAP.jpg",
      res = 600, height = 4.5, width = 4.5, units = "in")
 
