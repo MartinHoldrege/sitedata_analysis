@@ -210,8 +210,13 @@ newdata <- tibble(
                         length.out = length(aridity_index))
 )
 
-yhat_pft_transp0 <- tot_transp_pft_diff %>%
+yhat_pft_transp0 <- tot_transp_diff %>%
+  ungroup() %>%
+  select(site, intensity, warm, SoilTreatment, EVAPTOT_diff, drain_diff) %>%
+  right_join(tot_transp_pft_diff,
+             by = c("site", "intensity", "warm", "SoilTreatment")) %>%
   filter(warm == "ambient", SoilTreatment == "loam") %>%
+  select(-warm, -SoilTreatment) %>%
   group_by(intensity, PFT) %>%
   nest() %>%
   # fitting loess curves
@@ -226,26 +231,37 @@ yhat_pft_transp0 <- tot_transp_pft_diff %>%
   mod_map = map(data, function(df) {
     loess(TRANSP_diff ~ PRECIP_ppt_Mean, data = df)
   }),
+  # model for evap
+  # drainage and evap differences between PFTs don't apply, it's just
+  # fitting the same model for each PFT
+  mod_evap = map(data, function(df) {
+    loess(EVAPTOT_diff ~ aridity_index, data = df)
+  }),
+  mod_drain = map(data, function(df) {
+    loess(drain_diff ~ aridity_index, data = df)
+  }),
   # predicting for original x data
   yhat_orig = map(mod, predict),
   # predicting on 'continuous' data
   yhat = map(mod, predict_newdata, newdata = newdata),
   yhat_perc = map(mod_perc, predict, newdata = newdata),
-  yhat_map = map(mod_map, predict, newdata = newdata)
+  yhat_map = map(mod_map, predict, newdata = newdata),
+  evap_yhat = map(mod_evap, predict, newdata = newdata),
+  drain_yhat = map(mod_drain, predict, newdata = newdata)
   )
 
 
 
 # original x values
 yhat_pft_transp_orig <- yhat_pft_transp0 %>%
-  select(-yhat, -yhat_perc, -yhat_map) %>%
+  select(-yhat, -yhat_perc, -yhat_map, -matches("_yhat")) %>%
   unnest(cols = c(yhat_orig, data)) %>%
   mutate(resid = TRANSP_diff - yhat_orig)
 
 # 'continous x'
 yhat_pft_transp <- yhat_pft_transp0 %>%
   select(-mod, -data, -mod_perc, -yhat_orig) %>%
-  unnest(cols = c(yhat, yhat_perc, yhat_map)) %>%
+  unnest(cols = c(yhat, yhat_perc, yhat_map, evap_yhat, drain_yhat)) %>%
   # absolute value
   mutate(yhat_abs = abs(yhat),
          yhat_perc_abs = abs(yhat_perc),
@@ -261,6 +277,10 @@ yhat_pft_transp_sum <- yhat_pft_transp %>%
     # aridity and max predicted
     arid_max_yhat = mean(aridity_index[yhat == max_yhat]),
     arid_min_yhat = mean(aridity_index[yhat == min(yhat)]),
+    # AI at which evap reduced the most
+    arid_min_evap = mean(aridity_index[evap_yhat == min(evap_yhat)]),
+    # aridity index at which drainage increased the most
+    arid_max_drain =  mean(aridity_index[drain_yhat == max(drain_yhat)]),
     # 'transition' or 'threshold' point. constraining to range of interest,
     # so don't get where 'tail' crosses over 0 twice
     arid_0_yhat = mean(aridity_index[yhat_abs == min(yhat_abs[aridity_index < 0.8]) &

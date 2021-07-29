@@ -187,11 +187,13 @@ bio_transp_diff1 %>%
 dev.off()
 
 
-# R2--transp vs bio diff --------------------------------------------------
+# correlation--transp vs bio diff --------------------------------------------
 
 # relationship between change in transpiration and change in biomass (across
 # all PFTs), for all 3 intensity treatments
-tot_bio_transp_diff %>%
-  filter(SoilTreatment == "loam", warm == "ambient") %>%
-  lm(TRANSP_diff ~ bio_diff, data = .) %>%
-  summary()
+df <- tot_bio_transp_diff %>%
+  filter(SoilTreatment == "loam", warm == "ambient")
+
+cor(df$TRANSP_diff, df$bio_diff)
+
+
