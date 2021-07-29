@@ -201,9 +201,13 @@ arid_range <- range(aridity1$aridity_index)
 
 # so predictions are just inside the range of the data
 arid_range <-  round(arid_range, 3) + c(0.001, -0.001)
-# continuous data to predict on
+# continuous data to predict on (including columns needed by different
+# models)
 newdata <- tibble(
-  aridity_index = seq(from = arid_range[1], to = arid_range[2], by = 0.001)
+  aridity_index = seq(from = arid_range[1], to = arid_range[2], by = 0.001),
+  PRECIP_ppt_Mean = seq(from = min(aridity1$PRECIP_ppt_Mean),
+                        to = max(aridity1$PRECIP_ppt_Mean),
+                        length.out = length(aridity_index))
 )
 
 yhat_pft_transp0 <- tot_transp_pft_diff %>%
@@ -218,27 +222,34 @@ yhat_pft_transp0 <- tot_transp_pft_diff %>%
   mod_perc = map(data, function(df) {
     loess(TRANSP_perc_diff ~ aridity_index, data = df)
   }),
+  # model for MAP
+  mod_map = map(data, function(df) {
+    loess(TRANSP_diff ~ PRECIP_ppt_Mean, data = df)
+  }),
   # predicting for original x data
   yhat_orig = map(mod, predict),
   # predicting on 'continuous' data
   yhat = map(mod, predict_newdata, newdata = newdata),
-  yhat_perc = map(mod_perc, predict, newdata = newdata))
+  yhat_perc = map(mod_perc, predict, newdata = newdata),
+  yhat_map = map(mod_map, predict, newdata = newdata)
+  )
 
 
 
 # original x values
 yhat_pft_transp_orig <- yhat_pft_transp0 %>%
-  select(-yhat, -yhat_perc) %>%
+  select(-yhat, -yhat_perc, -yhat_map) %>%
   unnest(cols = c(yhat_orig, data)) %>%
   mutate(resid = TRANSP_diff - yhat_orig)
 
 # 'continous x'
 yhat_pft_transp <- yhat_pft_transp0 %>%
   select(-mod, -data, -mod_perc, -yhat_orig) %>%
-  unnest(cols = c(yhat, yhat_perc)) %>%
+  unnest(cols = c(yhat, yhat_perc, yhat_map)) %>%
   # absolute value
   mutate(yhat_abs = abs(yhat),
-         yhat_perc_abs = abs(yhat_perc))
+         yhat_perc_abs = abs(yhat_perc),
+         yhat_map_abs = abs(yhat_map))
 
 # summary of predicted transp changes by pft
 yhat_pft_transp_sum <- yhat_pft_transp %>%
@@ -254,15 +265,17 @@ yhat_pft_transp_sum <- yhat_pft_transp %>%
     # so don't get where 'tail' crosses over 0 twice
     arid_0_yhat = mean(aridity_index[yhat_abs == min(yhat_abs[aridity_index < 0.8]) &
                                        aridity_index < 0.8 &
+                                       aridity_index > 0.3]),
+    # Threshold when using MAP.
+    map_0_yhat = mean(PRECIP_ppt_Mean[yhat_map_abs == min(yhat_map_abs[aridity_index < 0.8]) &
+                                       aridity_index < 0.8 &
                                        aridity_index > 0.3])
   )
 yhat_pft_transp_sum
 
-# aridity index at which predicted grass transp responses were most negative
+# means across intensity treatments
 yhat_pft_transp_sum %>%
-  filter(PFT == 'grass') %>%
-  pull(arid_min_yhat) %>%
-  mean()
-
+  group_by(PFT) %>%
+  summarise_if(is.numeric, mean)
 
 
