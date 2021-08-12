@@ -141,7 +141,7 @@ tm_shape(site3) +
 
 dev.off()
 
-# map aridity of points ---------------------------------------------------
+# map aridity points ------------------------------------------------------
 
 # just showing points (colored by aridity)
 jpeg("figures/maps/site_map_points-only.jpg",
@@ -155,6 +155,7 @@ tm_style(style = "white",
          ) +
   tm_shape(states3, bbox = bbox_new) +
   tm_borders(col = "black") +
+  tm_fill(col = "gray", alpha = 0.4) +
   tm_shape(site5) +
   tm_dots(col = "aridity_index",
           breaks = c(0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 10),

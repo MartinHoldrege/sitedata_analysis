@@ -176,7 +176,7 @@ bio_pft4_diff_0l <- bio_pft4_diff %>%
 
 # wide format for powerpoint
 jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4.jpeg", res = 600,
-     height = 7, width = 3, units = 'in')
+     height = 4, width = 4, units = 'in')
 
 # defining locationgs of breaks
 breaks_fun <- function(x) {
@@ -200,7 +200,7 @@ g <- ggplot(bio_pft4_diff_0l,
   theme(legend.title = element_blank(),
         legend.position = "top",
         strip.text = ggtext::element_markdown(hjust = 0)) +
-  lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 1) +
+  lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 2) +
   geom_point(size = 0.5) +
   scale_y_continuous(breaks = breaks_fun) +
   geom_smooth(se = FALSE) +

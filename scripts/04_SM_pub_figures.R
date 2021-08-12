@@ -286,7 +286,7 @@ g_transp0 <- g +
   labs(y = "Transpiration change (cm)",
        tag = "(a)") +
   theme(legend.position = "top") +
-  guides(color = guide_legend(ncol = 2))
+  guides(color = guide_legend(ncol = 1))
 
 legend_intensity <- ggpubr::get_legend(g_transp0)
 legend_intensity_wide <- ggpubr::get_legend(
@@ -319,13 +319,13 @@ g_drain
 
 
 jpeg("figures/soil_moisture/pub_qual/ETDRAIN_E-T-and-drain_vs_arid.jpeg", res = 600,
-     height = 7, width = 3, units = 'in')
+     height = 7, width = 2.5, units = 'in')
 grid.arrange(legend_intensity,
              g_transp,
              g_evap,
              g_drain,
              layout_matrix = matrix(c(1, 2, 3, 4), ncol = 1),
-             heights = c(3, 10, 10, 10))
+             heights = c(4, 10, 10, 10))
 dev.off()
 
 jpeg("figures/soil_moisture/pub_qual/ETDRAIN_E-T-and-drain_vs_arid_wide.jpeg", res = 600,
@@ -345,7 +345,7 @@ dev.off()
 
 # 3 panels, transpiration for shrubs, grasses and forbs
 jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
-     height = 7, width = 3, units = 'in')
+     height = 7, width = 2.5, units = 'in')
 g <- tot_transp_pft_diff %>%
   filter(SoilTreatment == "loam",
          warm == "ambient",
@@ -366,7 +366,7 @@ g <- tot_transp_pft_diff %>%
   lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 1) +
   geom_point(aes(y = TRANSP_diff), size = 0.5) +
   geom_smooth(aes(y = TRANSP_diff), se = FALSE) +
-  guides(color = guide_legend(ncol = 2))
+  guides(color = guide_legend(ncol = 1))
 g
 dev.off()
 
