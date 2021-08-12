@@ -334,3 +334,20 @@ predict_newdata <- function(mod, newdata) {
   newdata$yhat <- predict(mod, newdata = newdata)
   return(newdata)
 }
+
+
+# add letters -------------------------------------------------------------
+
+add_letters <- function(x, letters = base::letters) {
+  # x--factor that you want to factor by
+  # letters to paste to strings
+  # returns--factor with letters pasted in front, so that individual
+  # facets in a ggplot have unique letters
+  stopifnot(is.factor(x))
+
+  levels_old <- levels(x)
+  n <- length(levels_old)
+  levels_new <- paste0("**(", letters[1:n], ")** ", levels_old)
+  out <- factor(x, levels = levels_old, labels = levels_new)
+  out
+}

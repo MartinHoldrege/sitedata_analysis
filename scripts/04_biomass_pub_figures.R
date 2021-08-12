@@ -103,12 +103,15 @@ dev.off()
 jpeg("figures/biomass/pub_qual/boxplot_pft4.jpeg",
      res = 600,  height = 6,  width = 3, units = 'in')
 
-ggplot(df_list$pft4, aes(x = trmt_lab, y = bio_diff, fill = trmt_group)) +
+df_list$pft4 %>%
+  mutate(PFT_lab = add_letters(PFT)) %>%
+  ggplot(aes(x = trmt_lab, y = bio_diff, fill = trmt_group)) +
   box_base(outlier.size = 0.75) +
-  lemon::facet_rep_wrap(~ PFT, ncol = 1, scales = "free_y") +
+  lemon::facet_rep_wrap(~ PFT_lab, ncol = 1, scales = "free_y") +
   labs(y = bio_lab1_change) +
   theme(legend.text = element_text(size = 10),
-        axis.title = element_text(size = 13)) +
+        axis.title = element_text(size = 13),
+        strip.text = ggtext::element_markdown(hjust = 0)) +
   guides(fill = guide_legend(ncol = 1))
 dev.off()
 
@@ -168,11 +171,12 @@ dev.off()
 bio_pft4_diff_0l <- bio_pft4_diff %>%
   filter(warm == "ambient",
          intensity != "ambient",
-         SoilTreatment == "loam")
+         SoilTreatment == "loam") %>%
+  mutate(PFT_lab = add_letters(PFT))
 
 # wide format for powerpoint
 jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4.jpeg", res = 600,
-     height = 4, width = 4, units = 'in')
+     height = 7, width = 3, units = 'in')
 
 # defining locationgs of breaks
 breaks_fun <- function(x) {
@@ -194,10 +198,12 @@ g <- ggplot(bio_pft4_diff_0l,
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +
   theme(legend.title = element_blank(),
-        legend.position = "top") +
-  lemon::facet_rep_wrap(~PFT, scales = "free_y", ncol = 2) +
+        legend.position = "top",
+        strip.text = ggtext::element_markdown(hjust = 0)) +
+  lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 1) +
   geom_point(size = 0.5) +
   scale_y_continuous(breaks = breaks_fun) +
-  geom_smooth(se = FALSE)
+  geom_smooth(se = FALSE) +
+  guides(color = guide_legend(ncol = 2))
 g
 dev.off()

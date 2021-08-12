@@ -12,6 +12,8 @@
 library(tidyverse)
 library(lubridate)
 library(gridExtra)
+library(egg)
+source("scripts/functions.R")
 source("scripts/fig_params.R")
 source("scripts/03_SM_summarize.R")
 
@@ -64,8 +66,11 @@ jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth.jpg",
      height = 5,
      width = 2.5,
      units = 'in')
-g <- ggplot(lyr_all_diff_0l,
-       aes(x = -depth, y = TRANSP_diff)) +
+
+
+g <- lyr_all_diff_0l %>%
+  mutate(intensity_lab = add_letters(x = intensity)) %>%
+  ggplot(aes(x = -depth, y = TRANSP_diff)) +
   geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
   geom_boxplot(aes(group = -depth, color = intensity),
                outlier.size = 0.4, size = 0.8) +
@@ -74,12 +79,16 @@ g <- ggplot(lyr_all_diff_0l,
   stat_summary(fun = mean, geom = "point", color = "black", alpha = 0.7,
                size = 0.8) +
   coord_flip() +
-  lemon::facet_rep_wrap(~intensity, ncol = 1) +
+  lemon::facet_rep_wrap(~intensity_lab, ncol = 1) +
   scale_x_continuous(breaks = breaks, labels = break_labels) +
   labs(x = depth_lab,
        y = "Transpiration change (cm)") +
   scale_color_manual(values = cols_intensity) +
-  theme(legend.position = "none")
+  theme(legend.position = "none",
+        # allows text to render as markdown
+        strip.text = ggtext::element_markdown(hjust = 0))
+
+
 g
 dev.off()
 
@@ -134,20 +143,13 @@ break_labels <- rep("", 12)
 # only add labels to some months
 break_labels[c(1, 5, 9)] <-  c("Jan", "May", "Sept")
 
-# just ambient and 2x intensity
-p <- ggplot(data = dly_lyr_means_2x,
-            aes(x = day, color = intensity)) +
-  lemon::facet_rep_wrap(~ depth_group, ncol = 1) +
-  scale_color_manual(values = cols_intensity) +
-  scale_x_continuous(breaks = break_doys,
-                     labels = break_labels) +
-  labs(y = transp_lab0,
-       x = "Day of year")
+
 
 # all intensity levels
-p_all <- ggplot(data = dly_lyr_means_all,
-                aes(x = day, color = intensity)) +
-  lemon::facet_rep_wrap(~ depth_group, ncol = 1) +
+p_all <-  dly_lyr_means_all %>%
+  mutate(lab1 = add_letters(depth_group, letters = letters),
+         lab2 = add_letters(depth_group, letters = letters[4:6])) %>%
+  ggplot(aes(x = day, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   scale_x_continuous(breaks = break_doys,
                      labels = break_labels) +
@@ -159,21 +161,13 @@ p_all <- ggplot(data = dly_lyr_means_all,
 
 g_line <- p_all +
   labs(y = transp_lab0) +
-  theme(legend.position = "none") +
-  geom_line(aes(y = TRANSP_mean))
+  theme(legend.position = "none",
+        strip.text = ggtext::element_markdown(hjust = 0)) +
+  geom_line(aes(y = TRANSP_mean)) +
+  lemon::facet_rep_wrap(~lab1, ncol = 1)
+
 
 g_line
-
-g_rib <- p +
-  labs(y = transp_lab0) +
-  theme(legend.position = "none") +
-  geom_ribbon(aes(ymin = TRANSP_lwr, ymax = TRANSP_upr,
-                         fill = intensity), alpha = 0.2,
-              color = NA) +
-  geom_line(aes(y = TRANSP_mean)) +
- scale_fill_manual(values = cols_intensity)
-
-g_rib
 
 
 # * DOY vs WETDAY ---------------------------------------------------------
@@ -181,22 +175,12 @@ g_rib
 w_line <- p_all +
   labs(y = wetday_prop_lab0) +
   theme(legend.position = "top",
-        legend.title = element_blank()) +
-  geom_line(aes(y = WETDAY_mean))
+        legend.title = element_blank(),
+        strip.text = ggtext::element_markdown(hjust = 0)) +
+  geom_line(aes(y = WETDAY_mean)) +
+  lemon::facet_rep_wrap(~lab2, ncol = 1)
 
 w_line
-
-w_rib <- p +
-  labs(y =wetday_prop_lab0) +
-  theme(legend.position = "top",
-        legend.title = element_blank()) +
-  geom_ribbon(aes(ymin = WETDAY_lwr, ymax = WETDAY_upr,
-                  fill = intensity), alpha = 0.2,
-              color = NA) +
-  geom_line(aes(y = WETDAY_mean)) +
-  scale_fill_manual(values = cols_intensity)
-
-w_rib
 
 
 # * combine figures -------------------------------------------------------
@@ -213,15 +197,6 @@ grid.arrange(
   heights = c(1, 10))
 dev.off()
 
-# lines and ribbons
-jpeg("figures/soil_moisture/pub_qual/TDOY_ribbon.jpeg", res = 600,
-     height = 5, width = 4, units = 'in')
-grid.arrange(
-  ggpubr::get_legend(w_rib),
-  g_rib, w_rib + theme(legend.position = "none"),
-  layout_matrix = lay,
-  heights = c(1, 10))
-dev.off()
 
 # aridity vs 3x SM ------------------------------------------------------
 #  3 panels, transpiration, evaporation, deep drainage, all vs aridity
@@ -234,7 +209,7 @@ psize <- 0.5 # point size
 g <-  ggplot(tot_transp_diff_0l,
              aes(x = aridity_index, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
-  labs(x = aridity_lab) +
+  labs(x = NULL) +
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +
   theme(legend.title = element_blank()) +
@@ -250,9 +225,14 @@ g_transp0 <- g +
   geom_smooth(aes(y = TRANSP_diff), se = FALSE) +
   labs(y = "Transpiration change (cm)",
        tag = "(a)") +
-  theme(legend.position = "top")
+  theme(legend.position = "top") +
+  guides(color = guide_legend(ncol = 2))
 
 legend_intensity <- ggpubr::get_legend(g_transp0)
+legend_intensity_wide <- ggpubr::get_legend(
+  g_transp0 +
+    guides(color = guide_legend(ncol = 3)))
+
 g_transp <- g_transp0 +
   theme(legend.position = "none")
 g_transp
@@ -270,34 +250,32 @@ g_drain <- g2 +
   geom_point(aes(y = drain_diff), size = psize) +
   geom_smooth(aes(y = drain_diff), se = FALSE) +
   labs(y = "Drainage change (cm)",
-       tag = "(c)")
+       tag = "(c)",
+       x = aridity_lab)
 
 g_drain
 
 # combine figures
 
-lay <- rbind(c(1, 1),
-             c(2, 3),
-             c(4, NA))
 
 jpeg("figures/soil_moisture/pub_qual/ETDRAIN_E-T-and-drain_vs_arid.jpeg", res = 600,
-     height = 5, width = 5, units = 'in')
+     height = 7, width = 3, units = 'in')
 grid.arrange(legend_intensity,
              g_transp,
              g_evap,
              g_drain,
-             layout_matrix = lay,
-             heights = c(2, 10, 10))
+             layout_matrix = matrix(c(1, 2, 3, 4), ncol = 1),
+             heights = c(3, 10, 10, 10))
 dev.off()
 
 jpeg("figures/soil_moisture/pub_qual/ETDRAIN_E-T-and-drain_vs_arid_wide.jpeg", res = 600,
      height = 3, width = 6.5, units = 'in')
 
-lay_wide <- lay <- rbind(c(1, 1, 1),
+lay_wide <- rbind(c(1, 1, 1),
                          c(2, 3, 4))
-grid.arrange(legend_intensity,
-             g_transp,
-             g_evap,
+grid.arrange(legend_intensity_wide,
+             g_transp + labs(x = aridity_lab),
+             g_evap + labs(x = aridity_lab),
              g_drain,
              layout_matrix = lay_wide,
              heights = c(3, 10))
@@ -307,13 +285,14 @@ dev.off()
 
 # 3 panels, transpiration for shrubs, grasses and forbs
 jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
-     height = 4, width = 4, units = 'in')
+     height = 7, width = 3, units = 'in')
 g <- tot_transp_pft_diff %>%
   filter(SoilTreatment == "loam",
          warm == "ambient",
          PFT != "total") %>%
   mutate(PFT = factor(PFT, levels = c("shrub", "grass", "forbs"),
-                      labels = c("shrub", "grass", "forb"))) %>%
+                      labels = c("shrub", "grass", "forb")),
+         PFT_lab = add_letters(PFT)) %>%
   ggplot(aes(x = aridity_index, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   labs(x = aridity_lab,
@@ -321,10 +300,13 @@ g <- tot_transp_pft_diff %>%
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +
   theme(legend.title = element_blank(),
-        legend.position = "top") +
-  lemon::facet_rep_wrap(~PFT, scales = "free_y", ncol = 2) +
+        legend.position = "top",
+        # allows text to render as markdown
+        strip.text = ggtext::element_markdown(hjust = 0)) +
+  lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 1) +
   geom_point(aes(y = TRANSP_diff), size = 0.5) +
-  geom_smooth(aes(y = TRANSP_diff), se = FALSE)
+  geom_smooth(aes(y = TRANSP_diff), se = FALSE) +
+  guides(color = guide_legend(ncol = 2))
 g
 dev.off()
 

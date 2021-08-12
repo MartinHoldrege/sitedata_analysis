@@ -159,6 +159,8 @@ descript <- tot_transp_diff %>%
     ETDRAIN_perc = mean(ETDRAIN_perc),
     SNOWLOSS_perc = mean(SNOWLOSS_perc),
     drain_diff_m = mean(drain_diff),
+    drain_diff_lwr = q1(drain_diff),
+    drain_diff_upr = q2(drain_diff),
     drain_perc_diff_m = mean(drain_perc_diff),
     drain_perc_diff_lwr = q1(drain_perc_diff),
     drain_perc_diff_upr = q2(drain_perc_diff),
