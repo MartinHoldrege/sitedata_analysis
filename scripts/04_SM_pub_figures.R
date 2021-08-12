@@ -12,7 +12,6 @@
 library(tidyverse)
 library(lubridate)
 library(gridExtra)
-library(egg)
 source("scripts/functions.R")
 source("scripts/fig_params.R")
 source("scripts/03_SM_summarize.R")
@@ -38,6 +37,10 @@ tot_transp_diff_0l <- tot_transp_diff %>%
   filter(SoilTreatment == "loam",
          warm == "ambient")
 
+lyr_pft_diff_0l <- lyr_pft_diff1 %>%
+  filter(warm == "ambient", SoilTreatment == "loam") %>%
+  mutate(PFT = str_replace(PFT, "forbs", "forb"),
+         PFT = factor(PFT, levels = c("total", "shrub", "grass", "forb")))
 
 
 # fig themes -------------------------------------------------------------
@@ -59,7 +62,6 @@ break_labels <- as.character(-breaks)
 
 
 # * only loam -------------------------------------------------------------
-
 
 jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth.jpg",
      res = 600,
@@ -128,6 +130,49 @@ lyr_all_diff1 %>%
   scale_color_manual(values = cols_intensity) +
   theme(legend.position = "none")
 
+dev.off()
+
+
+# * by PFT ----------------------------------------------------------------
+
+jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth_pft.jpg",
+     res = 600,
+     height = 4.5,
+     width = 5.5,
+     units = 'in')
+
+tag_df <- expand_grid(intensity = unique(lyr_pft_diff_0l$intensity),
+                      PFT = unique(lyr_pft_diff_0l$PFT)) %>%
+  arrange(PFT, intensity)
+# tags for corner of plots
+tag_df$tag <- paste("(", letters[1:nrow(tag_df)], ")", sep = "")
+
+g <- lyr_pft_diff_0l %>%
+  left_join(tag_df, by = c("intensity", "PFT")) %>%
+  group_by(PFT) %>%
+  # culculating min for placement of facets
+  mutate(diff_min = min(TRANSP_diff),
+         range = max(TRANSP_diff) - diff_min) %>%
+  ggplot(aes(x = -depth, y = TRANSP_diff)) +
+  geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
+  geom_boxplot(aes(group = -depth, color = intensity),
+               outlier.size = 0.4, size = 0.8) +
+  stat_summary(fun = mean, geom = "line", color = "black", alpha = 0.7,
+               size = 0.8) +
+  stat_summary(fun = mean, geom = "point", color = "black", alpha = 0.7,
+               size = 0.8) +
+  coord_flip() +
+  lemon::facet_rep_grid(intensity~PFT,
+                        scales = "free_x") +
+  scale_x_continuous(breaks = breaks, labels = break_labels) +
+  labs(x = depth_lab,
+       y = "Transpiration change (cm)") +
+  scale_color_manual(values = cols_intensity) +
+  theme(legend.position = "none") +
+  geom_text(aes(x = -15, y = diff_min + 0.1*range,
+                               label = tag))
+
+g
 dev.off()
 
 # DOY vs transp and wetday ----------------------------------------------
