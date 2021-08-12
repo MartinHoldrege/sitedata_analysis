@@ -153,6 +153,18 @@ g <- lyr_pft_diff_0l %>%
   # culculating min for placement of facets
   mutate(diff_min = min(TRANSP_diff),
          range = max(TRANSP_diff) - diff_min) %>%
+  ungroup() %>%
+  # adjusting so total/shrub and grass/forb panels have same scales
+  mutate(diff_min = ifelse(PFT == "shrub",
+                           min(diff_min[PFT == "total"]),
+                           ifelse(PFT == "forb",
+                                  min(diff_min[PFT == "grass"]),
+                                  diff_min)),
+         range =ifelse(PFT == "shrub",
+                       range[PFT == "total"],
+                       ifelse(PFT == "forb",
+                              range[PFT == "grass"],
+                              range))) %>%
   ggplot(aes(x = -depth, y = TRANSP_diff)) +
   geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
   geom_boxplot(aes(group = -depth, color = intensity),
@@ -170,7 +182,10 @@ g <- lyr_pft_diff_0l %>%
   scale_color_manual(values = cols_intensity) +
   theme(legend.position = "none") +
   geom_text(aes(x = -15, y = diff_min + 0.1*range,
-                               label = tag))
+                               label = tag)) +
+  # setting limits on horizontal axis
+  geom_point(aes(y = diff_min, x= 0), color = "white") +
+  geom_point(aes(y = diff_min + range, x= 0), color = "white")
 
 g
 dev.off()
