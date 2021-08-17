@@ -76,3 +76,4 @@ bio_lab2 <- expression("%"~Biomass~change~"("*frac("trmt - ctrl","ctrl")~"*100)"
 # misc.
 aridity_lab <- "Aridity index (MAP/PET)"
 depth_lab  <- "Soil depth (cm)"
+map_lab <- "MAP (cm)"

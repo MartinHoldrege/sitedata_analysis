@@ -266,8 +266,9 @@ range <- with(tot_transp_diff_0l,
 
 psize <- 0.5 # point size
 
+# not putting x variable here so figure base can be re-used for MAP
 g <-  ggplot(tot_transp_diff_0l,
-             aes(x = aridity_index, color = intensity)) +
+             aes(color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   labs(x = NULL) +
   geom_hline(yintercept = 0, linetype = 2,
@@ -281,37 +282,44 @@ g2 <- g +
 
 # transpiration
 g_transp0 <- g +
-  geom_point(aes(y = TRANSP_diff), size = psize) +
-  geom_smooth(aes(y = TRANSP_diff), se = FALSE) +
   labs(y = "Transpiration change (cm)",
        tag = "(a)") +
   theme(legend.position = "top") +
   guides(color = guide_legend(ncol = 1))
 
-legend_intensity <- ggpubr::get_legend(g_transp0)
+g_transp1 <- g_transp0 +
+  geom_point(aes(x = aridity_index, y = TRANSP_diff), size = psize) +
+  geom_smooth(aes(x = aridity_index, y = TRANSP_diff), se = FALSE)
+
+# extract legetnds
+legend_intensity <- ggpubr::get_legend(g_transp1)
 legend_intensity_wide <- ggpubr::get_legend(
-  g_transp0 +
+  g_transp1 +
     guides(color = guide_legend(ncol = 3)))
 
-g_transp <- g_transp0 +
-  theme(legend.position = "none")
+g_transp <- g_transp1 + theme(legend.position = "none")
+
 g_transp
 
 # evaporation
-g_evap <- g2 +
-  geom_point(aes(y = EVAPTOT_diff), size = psize) +
-  geom_smooth(aes(y = EVAPTOT_diff), se = FALSE) +
+g_evap0 <- g2 +
   labs(y = "Evaporation change (cm)",
        tag = "(b)")
+
+g_evap <- g_evap0 +
+  geom_point(aes(x = aridity_index, y = EVAPTOT_diff), size = psize) +
+  geom_smooth(aes(x = aridity_index, y = EVAPTOT_diff), se = FALSE)
 g_evap
 
 # drainage
-g_drain <- g2 +
-  geom_point(aes(y = drain_diff), size = psize) +
-  geom_smooth(aes(y = drain_diff), se = FALSE) +
+g_drain0 <- g2 +
   labs(y = "Drainage change (cm)",
-       tag = "(c)",
-       x = aridity_lab)
+       tag = "(c)")
+
+g_drain <- g_drain0 +
+  geom_point(aes(x = aridity_index, y = drain_diff), size = psize) +
+  geom_smooth(aes(x = aridity_index, y = drain_diff), se = FALSE) +
+  labs(x = aridity_lab)
 
 g_drain
 
@@ -341,12 +349,52 @@ grid.arrange(legend_intensity_wide,
              heights = c(3, 10))
 dev.off()
 
+
+# * MAP -------------------------------------------------------------------
+# MAP instead of aridity
+
+# transpiration
+g_transp2 <- g_transp0 +
+  theme(legend.position = "none") +
+  geom_point(aes(x = PRECIP_ppt_Mean, y = TRANSP_diff), size = psize) +
+  geom_smooth(aes(x = PRECIP_ppt_Mean, y = TRANSP_diff), se = FALSE)
+
+g_transp2
+
+# evaporation
+g_evap2 <- g_evap0 +
+  geom_point(aes(x = PRECIP_ppt_Mean, y = EVAPTOT_diff), size = psize) +
+  geom_smooth(aes(x = PRECIP_ppt_Mean, y = EVAPTOT_diff), se = FALSE)
+g_evap2
+
+# drainage
+g_drain2 <- g_drain0 +
+  geom_point(aes(x = PRECIP_ppt_Mean, y = drain_diff), size = psize) +
+  geom_smooth(aes(x = PRECIP_ppt_Mean, y = drain_diff), se = FALSE) +
+  labs(x = map_lab)
+
+g_drain2
+
+# combine figures
+
+
+jpeg("figures/soil_moisture/pub_qual/ETDRAIN_E-T-and-drain_vs_map.jpeg", res = 600,
+     height = 7, width = 2.5, units = 'in')
+grid.arrange(legend_intensity,
+             g_transp2,
+             g_evap2,
+             g_drain2,
+             layout_matrix = matrix(c(1, 2, 3, 4), ncol = 1),
+             heights = c(4, 10, 10, 10))
+dev.off()
+
+
 # aridity vs PFT transp -------------------------------------------------
 
 # 3 panels, transpiration for shrubs, grasses and forbs
 jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
      height = 7, width = 2.5, units = 'in')
-g <- tot_transp_pft_diff %>%
+g0 <- tot_transp_pft_diff %>%
   filter(SoilTreatment == "loam",
          warm == "ambient",
          PFT != "total") %>%
@@ -355,8 +403,7 @@ g <- tot_transp_pft_diff %>%
          PFT_lab = add_letters(PFT)) %>%
   ggplot(aes(x = aridity_index, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
-  labs(x = aridity_lab,
-       y = "Transpiration change (cm)") +
+  labs(y = "Transpiration change (cm)") +
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +
   theme(legend.title = element_blank(),
@@ -364,9 +411,12 @@ g <- tot_transp_pft_diff %>%
         # allows text to render as markdown
         strip.text = ggtext::element_markdown(hjust = 0)) +
   lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 1) +
-  geom_point(aes(y = TRANSP_diff), size = 0.5) +
-  geom_smooth(aes(y = TRANSP_diff), se = FALSE) +
+
   guides(color = guide_legend(ncol = 1))
+g <- g0 +
+  geom_point(aes(x = aridity_index, y = TRANSP_diff), size = 0.5) +
+  geom_smooth(aes(x = aridity_index,y = TRANSP_diff), se = FALSE) +
+  labs(x = aridity_lab)
 g
 dev.off()
 
@@ -379,6 +429,16 @@ g +
 
 dev.off()
 
+# * MAP vs PFT transp -----------------------------------------------------
+
+jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_map.jpeg", res = 600,
+     height = 7, width = 2.5, units = 'in')
+g0 +
+  geom_point(aes(x = PRECIP_ppt_Mean, y = TRANSP_diff), size = 0.5) +
+  geom_smooth(aes(x = PRECIP_ppt_Mean,y = TRANSP_diff), se = FALSE) +
+  labs(x = map_lab)
+
+dev.off()
 
 # drain vs evap -----------------------------------------------------------
 
