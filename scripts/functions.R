@@ -26,15 +26,6 @@ lyr2depth <- function(x) {
 }
 
 
-# depth2mid ---------------------------------------------------------------
-
-# replacing depth (i.e. actually bottom of layer), with middle of layer
-depth2mid <- function(x) {
-  bottom <- lyr2depth(1:8) # bottom of layer
-
-}
-
-
 # cut depth ---------------------------------------------------------------
 
 # cut depth into 3 categories

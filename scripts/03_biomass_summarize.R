@@ -134,6 +134,9 @@ bio_pft3_diff <- bio1 %>%
 
 # summary statistics ------------------------------------------------------
 
+# percent positive
+perc_pos <- function(x) sum(x > 0)/length(x)*100
+
 pft4_summary <- bio_pft4_diff %>%
   filter(SoilTreatment == "loam") %>%
   group_by(intensity, warm, PFT) %>%
@@ -142,7 +145,8 @@ pft4_summary <- bio_pft4_diff %>%
   mutate(bio_perc_diff = ifelse(is.infinite(bio_perc_diff),
                                 NA, bio_perc_diff)) %>%
   summarize_at(.vars = c("bio_diff", "bio_perc_diff"),
-               .funs = list(~mean(., na.rm = TRUE), lwr = q1, upr = q2))
+               .funs = list(~mean(., na.rm = TRUE), lwr = q1, upr = q2,
+                            pos = perc_pos))
 pft4_summary %>%
   filter(warm == "ambient", intensity == "2x intensity")
 pft4_summary %>%
