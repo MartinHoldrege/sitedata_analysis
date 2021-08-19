@@ -220,6 +220,22 @@ calc_perc_diff <- function(col, intensity, warm) {
     col[intensity == "ambient" & warm == "ambient"]*100
 }
 
+# difference of differences
+# i.e. differences between responses between soil types
+
+#' calculate differences between soils
+#'
+#' @param col Vector, response variable of interest
+#' @param soil Character/factor vector of soil type
+#' @param ref_soil reference soil type that want to take the difference against
+#'
+#' @return difference in col between soil types
+#' @export
+#'
+#' @examples
+calc_soil_diff <- function(col, soil, ref_soil = "silt") {
+  col - col[soil == ref_soil]
+}
 
 
 # query function ----------------------------------------------------------

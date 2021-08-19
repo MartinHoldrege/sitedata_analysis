@@ -129,6 +129,52 @@ lyr_pft_diff1 <- lyr_pft1 %>%
   left_join(aridity1, by = "site")
 
 
+# soils diffs -------------------------------------------------------------
+# plot level differences in responses between soil types, to better
+# get at plot level soil texture effects
+
+ref_soil <- "silt" # soil type comparing against
+
+
+mutate_soil_diffs <- function(df, .vars, ref_soil) {
+  # difference between given soil type and ref_soil
+  out <- df %>%
+    mutate_at(.vars = .vars,
+              .funs = calc_soil_diff,
+              # arguments for calc_soil_diff
+              soil = quote(SoilTreatment),
+              ref_soil = ref_soil) %>%
+    filter(SoilTreatment != ref_soil)
+  out
+}
+
+# across depths and pfts
+tot_transp_diff_soil <- tot_transp_diff %>%
+  group_by(site, intensity, warm) %>%
+  mutate_soil_diffs(.vars = paste0(c("TRANSP", "EVAPTOT", "drain", "AET", "T_AET"),
+                                   "_diff"),
+                    ref_soil)
+
+# across depths by pfts
+tot_transp_pft_diff_soil <- tot_transp_pft_diff %>%
+  group_by(site, intensity, warm, PFT) %>%
+  mutate_soil_diffs(.vars = "TRANSP_diff",
+                    ref_soil)
+
+# by depth across pft
+lyr_all_diff_soil <- lyr_all_diff1 %>%
+  group_by(site, intensity, warm, depth) %>%
+  # difference between given soil type and ref_soil
+  mutate_soil_diffs(.vars = c("TRANSP_diff", "WETDAY_diff"),
+                    ref_soil = ref_soil)
+
+# by depth and pft
+lyr_pft_diff_soil <- lyr_pft_diff1 %>%
+  group_by(site, intensity, warm, depth, PFT) %>%
+  # difference between given soil type and ref_soil
+  mutate_soil_diffs(.vars = c("TRANSP", "TRANSP_diff", "TRANSP_perc_diff"),
+                    ref_soil = ref_soil)
+
 # descriptive stats -------------------------------------------------------
 
 # overview for question 1 of results sections

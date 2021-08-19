@@ -8,6 +8,7 @@
 
 # dependencies ------------------------------------------------------------
 
+library(lemon)
 source("scripts/03_SM_summarize.R")
 source("scripts/fig_params.R")
 
@@ -497,5 +498,137 @@ for (i in 1:nrow(fig_df)) {
 
 dev.off()
 
-}
 
+
+
+# Soil diffs --------------------------------------------------------------
+# site level differences between a given soil texture and reference
+# soil texture.
+
+# note change reference soil texture in labels if ref_soil changed
+transp_s_lab1 <- expression(Delta*"Transp"["soil"]*" - "*Delta*"Transp"["silt"]*" (cm)")
+
+evap_s_lab1 <- expression(Delta*" Evap"["soil"]*" - "*Delta*" Evap"["silt"]*" (cm)")
+
+drain_s_lab1 <- expression(Delta*" Drain"["soil"]*" - "*Delta*" Drain"["silt"]*" (cm)")
+
+vwc_s_lab1 <- expression(Delta*" VWC"["soil"]*" - "*Delta*" VWC"["silt"]*" (cm/cm)")
+
+wetday_s_lab1 <- expression(Delta*" Wet days"["soil"]*" - "*Delta*" Wet days"["silt"]*" (days/yr)")
+
+cap1 <- paste0("Values are calculated as plot level differences in a response ",
+              "\nvariable, between the given soil type and ",
+              ref_soil)
+
+pdf("figures/soil_moisture/SM_soiltype_diffs.pdf",
+    width = width,
+    height = height)
+
+# * hists--across depth ---------------------------------------------------
+
+g <- ggplot(tot_transp_diff_soil, aes(color = SoilTreatment)) +
+  facet_rep_grid(intensity ~ warm) +
+  texture_legend() +
+  geom_vline(xintercept = 0, linetype = 2) +
+  labs(caption = cap1)
+
+# delta transpiration
+g + geom_density(aes(x = TRANSP_diff))+
+  labs(x = transp_s_lab1,
+       title = "Absolute transpiration difference")
+
+# delta evaporation
+g + geom_density(aes(x = EVAPTOT_diff))+
+  labs(x = evap_s_lab1,
+       title = "Absolute evaporation difference")
+
+# delta drainage
+g2 <- g + geom_density(aes(x = drain_diff))+
+  labs(x = drain_s_lab1,
+       title = "Absolute drainage difference")
+
+g2 +
+  facet_rep_grid(intensity ~ warm, scales = "free") +
+  labs(subtitle = "scales differ")
+
+
+# * by depth across pfts --------------------------------------------------
+
+
+# ** VWC ------------------------------------------------------------------
+
+g <- ggplot(lyr_all_diff_soil, aes(y = VWC_diff)) +
+  lyr_base() +
+  labs(y = vwc_s_lab1,
+       title = "Treatment effects on volumetric water content",
+       caption = cap1)
+g +
+  boxplot_base()
+
+g +
+  mean_line()
+
+# ** wetdays ---------------------------------------------------------------
+
+g <- ggplot(lyr_all_diff_soil, aes(y = WETDAY_diff)) +
+  lyr_base() +
+  labs(y = wetday_s_lab1,
+       title = "Treatment effects on number of wet days",
+       caption = cap1)
+
+g +
+  boxplot_base()
+
+g +
+  mean_line()
+
+
+# ** total transpiration ---------------------------------------------------
+
+g <- ggplot(lyr_all_diff_soil, aes(y = TRANSP_diff)) +
+  lyr_base() +
+  labs(y = transp_s_lab1,
+       title = "Treatment effects on total transpiration from each layer",
+       caption = cap1)
+
+g +
+  boxplot_base()
+
+g +
+  mean_line()
+
+# * totals vs aridity -----------------------------------------------------
+
+g <- ggplot(tot_transp_diff_soil,
+            aes(color = SoilTreatment, group = SoilTreatment)) +
+  geom_hline(yintercept = 0, linetype = 2) +
+  lemon::facet_rep_grid(intensity ~ warm) +
+  labs(x = aridity_lab,
+       caption = cap1) +
+  texture_legend()
+
+# T diff
+g +
+  geom_point(aes(x = aridity_index, y = TRANSP_diff)) +
+  geom_smooth(aes(x = aridity_index, y = TRANSP_diff), method = "loess",
+              se = se) +
+  labs(y = transp_s_lab1,
+       title = "Total transpiration difference across soil layers vs aridity")
+
+# Evap
+g +
+  geom_point(aes(x = aridity_index, y = EVAPTOT_diff)) +
+  geom_smooth(aes(x = aridity_index, y = EVAPTOT_diff), method = "loess",
+              se = se) +
+  labs(y = evap_s_lab1,
+       title = "Total evaporation  vs aridity")
+
+# drain
+g +
+  geom_point(aes(x = aridity_index, y = drain_diff)) +
+  geom_smooth(aes(x = aridity_index, y = drain_diff), method = "loess",
+              se = se) +
+  labs(y = drain_s_lab1,
+       title = "Drainage difference vs aridity")
+dev.off()
+}
