@@ -237,6 +237,35 @@ tot_transp_pft %>%
   group_by(intensity, warm, SoilTreatment) %>%
   summarize(shrub_transp_perc = mean(shrub_transp_perc))
 
+
+# * proportion total transp -----------------------------------------------
+# percent of total transpiration from various depths
+
+lyr_pft_perc_tot <- lyr_pft1 %>%
+  select(-layer) %>%
+  group_by(site, intensity, warm, PFT, SoilTreatment) %>%
+  mutate(# total transpiration for pft across layers
+    tot_transp = sum(TRANSP)) %>%
+  # using seperate mutate calls so works with dtplyr
+  mutate(# % of total transp, transpired from specific soil layer
+         perc_transp = TRANSP/tot_transp*100) %>%
+  group_by(site, PFT, SoilTreatment, depth) %>%
+  mutate(perc_transp_diff = calc_diff(perc_transp, intensity, warm)) %>%
+  group_by(PFT, intensity, warm,  SoilTreatment, depth) %>%
+  summarise_at(.vars = c("TRANSP", "perc_transp", "perc_transp_diff"),
+            .funs = list(m = mean))
+
+df <- lyr_pft_perc_tot %>%
+  filter(warm == "ambient", SoilTreatment == "loam")
+# View(df)
+
+# % changes by depth grouping
+df2 <- df %>%
+  mutate(depth_group = cut_depth(depth)) %>%
+  group_by(PFT, intensity, warm, SoilTreatment, depth_group) %>%
+  summarise_at(.vars = c("perc_transp_m", "perc_transp_diff_m"),
+               .funs = sum)
+# View(df2)
 # fitting loess curves ----------------------------------------------------
 # Next: look at residuals and regress against seasonality
 
@@ -245,7 +274,6 @@ tot_transp_pft %>%
 # * transp by PFT and total --------------------------------------------------
 # dataframe includes both total transp and transp by pft
 
-arid_range <- range(aridity1$aridity_index)
 
 # so predictions are just inside the range of the data
 arid_range <-  round(arid_range, 3) + c(0.001, -0.001)
