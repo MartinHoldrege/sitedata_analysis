@@ -389,6 +389,25 @@ grid.arrange(legend_intensity,
 dev.off()
 
 
+# ardity vs T by soiltype -------------------------------------------------
+jpeg("figures/soil_moisture/pub_qual/T_vs_arid_by_soil.jpeg", res = 600,
+     height = 7, width = 2.5, units = 'in')
+tot_transp_diff %>%
+  filter(warm == "ambient") %>%
+  ggplot(aes(x = aridity_index, y = TRANSP_diff, color = SoilTreatment)) +
+  scale_color_manual(values = cols_text) +
+  labs(x = aridity_lab,
+       y = "Transpiration change (cm)") +
+  geom_hline(yintercept = 0, linetype = 2,
+             alpha = 0.7) +
+  theme(legend.title = element_blank(),
+        legend.position = "top") +
+  geom_point(size = psize) +
+  geom_smooth(se = FALSE) +
+  lemon::facet_rep_wrap(~intensity, ncol = 1) +
+  guides(color = guide_legend(nrow = 2))
+dev.off()
+
 # aridity vs PFT transp -------------------------------------------------
 
 # 3 panels, transpiration for shrubs, grasses and forbs

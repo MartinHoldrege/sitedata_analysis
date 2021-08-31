@@ -224,3 +224,24 @@ g +
   geom_smooth(aes(x = PRECIP_ppt_Mean), se = FALSE) +
   labs(x = map_lab)
 dev.off()
+
+
+# pft4 vs aridity by soiltype ---------------------------------------------
+# biomass vs aridity by soil type. each of 4 pfts and intensity levels
+# in seperate panels
+jpeg("figures/biomass/pub_qual/BIOPFT_pft4_soil.jpeg", res = 600,
+     height = 5, width = 5, units = 'in')
+bio_pft4_diff %>%
+  filter(warm == "ambient") %>%
+  ggplot(aes(y = bio_diff, color = SoilTreatment)) +
+  scale_color_manual(values = cols_text) +
+  labs(y = bio_lab1_change) +
+  geom_hline(yintercept = 0, linetype = 2,
+             alpha = 0.7) +
+  theme(legend.title = element_blank(),
+        legend.position = "top") +
+  lemon::facet_rep_grid(PFT ~ intensity, scales = "free_y") +
+  geom_point(aes(x = aridity_index), size = 0.5) +
+  geom_smooth(aes(x = aridity_index), se = FALSE) +
+  labs(x = aridity_lab)
+dev.off()
