@@ -150,7 +150,7 @@ pft4_summary <- bio_pft4_diff %>%
 pft4_summary %>%
   filter(warm == "ambient", intensity == "2x intensity")
 pft4_summary %>%
-  filter(warm == "3C warming") %>%
+  filter(warm %in% c("3C warming", "5C warming")) %>%
   select(matches("perc"), everything()) %>%
   print.data.frame()
 

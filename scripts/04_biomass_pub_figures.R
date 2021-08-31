@@ -1,4 +1,6 @@
+# Martin Holdrege
 
+# Publication quality figures of biomass responses
 
 # dependencies ------------------------------------------------------------
 
@@ -174,7 +176,6 @@ bio_pft4_diff_0l <- bio_pft4_diff %>%
          SoilTreatment == "loam") %>%
   mutate(PFT_lab = add_letters(PFT))
 
-# wide format for powerpoint
 jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4.jpeg", res = 600,
      height = 4, width = 4, units = 'in')
 
@@ -190,20 +191,36 @@ breaks_fun <- function(x) {
   out
 }
 
+
 g <- ggplot(bio_pft4_diff_0l,
-            aes(x = aridity_index, y = bio_diff, color = intensity)) +
+            aes(y = bio_diff, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
-  labs(x = aridity_lab,
-       y = bio_lab1_change) +
+  labs(y = bio_lab1_change) +
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +
   theme(legend.title = element_blank(),
         legend.position = "top",
         strip.text = ggtext::element_markdown(hjust = 0)) +
   lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 2) +
-  geom_point(size = 0.5) +
+
   scale_y_continuous(breaks = breaks_fun) +
-  geom_smooth(se = FALSE) +
   guides(color = guide_legend(ncol = 2))
-g
+
+g +
+  geom_point(aes(x = aridity_index), size = 0.5) +
+  geom_smooth(aes(x = aridity_index), se = FALSE) +
+  labs(x = aridity_lab)
+
+dev.off()
+
+
+# * pft4 vs MAP ------------------------------------------------------------
+# no warming, biomass change vs MAP (for appendix)
+
+jpeg("figures/biomass/pub_qual/BIOPFTMAP_pft4.jpeg", res = 600,
+     height = 4, width = 4, units = 'in')
+g +
+  geom_point(aes(x = PRECIP_ppt_Mean), size = 0.5) +
+  geom_smooth(aes(x = PRECIP_ppt_Mean), se = FALSE) +
+  labs(x = map_lab)
 dev.off()
