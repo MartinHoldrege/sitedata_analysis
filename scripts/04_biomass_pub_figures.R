@@ -100,7 +100,7 @@ dev.off()
 
 
 # * just biomass response for pft4-------------------------------------------
-# figure 7 for manuscirpt
+# formerly fig 7 in manuscript, now for appendix
 
 jpeg("figures/biomass/pub_qual/boxplot_pft4.jpeg",
      res = 600,  height = 6,  width = 3, units = 'in')
@@ -115,6 +115,49 @@ df_list$pft4 %>%
         axis.title = element_text(size = 13),
         strip.text = ggtext::element_markdown(hjust = 0)) +
   guides(fill = guide_legend(ncol = 1))
+dev.off()
+
+# dotplot--shrub:grass ----------------------------------------------------
+# ratio of shrubs to perennial C3 grasses
+
+# adding labels for figure
+bio_SC3Gr_1 <- bio_SC3Gr %>%
+  create_trmt_labels()
+
+bio_SC3Gr_2 <- bio_SC3Gr %>%
+  # create_trmt_labels function excludes control treatment
+  filter(intensity == "ambient" & warm == "ambient",
+         SoilTreatment == "loam") %>%
+  mutate(trmt_group = "control",
+         trmt_lab = "control") %>%
+  bind_rows(bio_SC3Gr_1) %>%
+  # refactoring after bind
+  mutate(trmt_group =
+           factor(trmt_group,
+                  levels = c("control", levels(bio_SC3Gr_1$trmt_group))),
+         trmt_lab =
+           factor(trmt_lab,
+                  levels = rev(c("control", levels(bio_SC3Gr_1$trmt_lab))))
+  )
+
+# for vertical line
+ctrl_mean <- with(bio_SC3Gr_2, mean(SGr[trmt_lab == "control"]))
+
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio.jpeg",
+     res = 600, height = 4,  width = 3, units = 'in')
+
+ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
+  geom_vline(xintercept = ctrl_mean, linetype = 2, alpha = 0.7) +
+  geom_point() +
+  geom_errorbar(aes(xmin = SGr - SGr_se, xmax = SGr + SGr_se)) +
+  scale_color_manual(values = c("control" = "black", cols_group)) +
+  theme(legend.position = "top",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 8)) +
+  guides(color = guide_legend(ncol = 1)) +
+  labs(y = "Treatment",
+       x = "Shrub:C3 grass")
+
 dev.off()
 
 # biomass change vs aridity -----------------------------------------------
