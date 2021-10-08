@@ -207,7 +207,7 @@ yhat_pft_bio %>%
     # 'transition' or 'threshold' point. constraining to range of interest,
     # so don't get where 'tail' crosses over 0 twice.
     # aridity at which predicted value is 0.
-    arid_0_yhat = mean(aridity_index[yhat_abs == min(yhat_abs[aridity_index < 0.8]) &
-                                       aridity_index < 0.8 &
-                                       aridity_index > 0.3])
+    arid_0_yhat = mean(aridity_index[yhat_abs == min(yhat_abs[aridity_index < 0.8 & aridity_index > 0.3]) &
+                                       aridity_index < 0.7 &
+                                       aridity_index > 0.4])
   )

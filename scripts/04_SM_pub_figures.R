@@ -61,48 +61,6 @@ breaks <- c(0, -50, -100)
 break_labels <- as.character(-breaks)
 
 
-# * only loam -------------------------------------------------------------
-
-jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth.jpg",
-     res = 600,
-     height = 5,
-     width = 2.5,
-     units = 'in')
-
-
-g <- lyr_all_diff_0l %>%
-  mutate(intensity_lab = add_letters(x = intensity)) %>%
-  ggplot(aes(x = -depth, y = TRANSP_diff)) +
-  geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
-  geom_boxplot(aes(group = -depth, color = intensity),
-               outlier.size = 0.4, size = 0.8) +
-  stat_summary(fun = mean, geom = "line", color = "black", alpha = 0.7,
-               size = 0.8) +
-  stat_summary(fun = mean, geom = "point", color = "black", alpha = 0.7,
-               size = 0.8) +
-  coord_flip() +
-  lemon::facet_rep_wrap(~intensity_lab, ncol = 1) +
-  scale_x_continuous(breaks = breaks, labels = break_labels) +
-  labs(x = depth_lab,
-       y = "Transpiration change (cm)") +
-  scale_color_manual(values = cols_intensity) +
-  theme(legend.position = "none",
-        # allows text to render as markdown
-        strip.text = ggtext::element_markdown(hjust = 0))
-
-
-g
-dev.off()
-
-jpeg("figures/soil_moisture/pub_qual/TBOX_transp_v_depth_wide.jpg",
-     res = 600,
-     height = 2,
-     width = 5,
-     units = 'in')
-
-g +lemon::facet_rep_wrap(~intensity, nrow = 1)
-dev.off()
-
 
 # * by soil texture -------------------------------------------------------
 
@@ -189,6 +147,45 @@ g <- lyr_pft_diff_0l %>%
 
 g
 dev.off()
+
+
+# depth dotplot -----------------------------------------------------------
+# simplified presentation of transpiration with depth response.
+
+# depth vs transpiration for grasses and shrubs, 2x intensity, loam soil
+
+jpeg("figures/soil_moisture/pub_qual/TDOT_transp_v_depth.jpg",
+     res = 800,
+     height = 3,
+     width = 2.2,
+     units = 'in')
+
+
+lyr_pft_diff_0l %>%
+  filter(intensity == "2x intensity",
+         PFT %in% c("grass", "shrub")) %>%
+  group_by(depth, PFT) %>%
+  summarize(TRANSP_diff_se = plotrix::std.error(TRANSP_diff),
+            TRANSP_diff = mean(TRANSP_diff),
+            .groups = "drop") %>%
+  mutate(PFT_lab = add_letters(factor(PFT, levels = c("shrub", "grass")))) %>%
+  ggplot(aes(x = -depth, y = TRANSP_diff)) +
+  geom_line(alpha = 0.8) +
+  geom_point(color = cols_intensity["2x intensity"],
+             size = 1) +
+  geom_errorbar(aes(ymin = TRANSP_diff - TRANSP_diff_se,
+                    ymax = TRANSP_diff + TRANSP_diff_se),
+                color = cols_intensity["2x intensity"]) +
+  geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
+  coord_flip() +
+  lemon::facet_rep_wrap(~PFT_lab, ncol = 1) +
+  scale_x_continuous(breaks = breaks, labels = break_labels) +
+  labs(x = depth_lab,
+       y = "Transpiration change (cm)") +
+  theme(strip.text = ggtext::element_markdown(hjust = 0))
+
+dev.off()
+
 
 # DOY vs transp and wetday ----------------------------------------------
 
