@@ -91,17 +91,26 @@ bio_SG_diff1 <- bio_SG1 %>%
 # shrub:grass ratio biomass diff
 # NOTE: think about whether differences in ratios is really the best metric
 # perhaps ratio of ratios would be better?
-bio_SGr_diff1 <- bio_SG1 %>%
+bio_SGr1 <- bio_SG1 %>%
   group_by(site, SoilTreatment, intensity, warm) %>%
   # S:G ratio
   mutate(SGr = biomass[SG == "total_shrub"]/biomass[SG == "total_grass"]) %>%
   # otherwise rows duplicated
   filter(SG == "total_shrub") %>%
   ungroup() %>%
-  select(-biomass, -SG) %>%
+  select(-biomass, -SG)
+
+bio_SGr_diff1 <- bio_SGr1 %>%
   group_by(site, SoilTreatment) %>%
   mutate(SGr_diff = calc_diff(SGr, intensity, warm)) %>%
   filter(!(intensity == "ambient" & warm == "ambient"))
+
+# mean ratio of all shrubs to all grasses
+bio_SGr_m <- bio_SGr1 %>%
+  group_by(SoilTreatment, intensity, warm) %>%
+  summarize(SGr_se = plotrix::std.error(SGr), # across plots
+            SGr = mean(SGr),
+            .groups = "drop")
 
 # ratio of shrubs to p.cool.grass, for dotplot in manuscript
 # here comparing c3 grasses (excluding cheatgrass) to shrubs (c3)
