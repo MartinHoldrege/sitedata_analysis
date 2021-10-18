@@ -205,7 +205,7 @@ break_labels[c(1, 5, 9)] <-  c("Jan", "May", "Sept")
 # all intensity levels
 p_all <-  dly_lyr_means_all %>%
   mutate(lab1 = add_letters(depth_group, letters = letters),
-         lab2 = add_letters(depth_group, letters = letters[4:6])) %>%
+         lab2 = add_letters(depth_group, letters = letters[3:4])) %>%
   ggplot(aes(x = day, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   scale_x_continuous(breaks = break_doys,
@@ -246,12 +246,12 @@ lay = rbind(c(1, 1),
             c(2, 3))
 # line only
 jpeg("figures/soil_moisture/pub_qual/TDOY_line.jpeg", res = 600,
-     height = 5, width = 4, units = 'in')
+     height = 4, width = 4, units = 'in')
 grid.arrange(
   ggpubr::get_legend(w_line + guides(color = guide_legend(ncol = 2))),
   g_line, w_line + theme(legend.position = "none"),
              layout_matrix = lay,
-  heights = c(1, 10))
+  heights = c(1, 7))
 dev.off()
 
 

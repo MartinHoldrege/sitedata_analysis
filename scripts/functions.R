@@ -29,12 +29,21 @@ lyr2depth <- function(x) {
 # cut depth ---------------------------------------------------------------
 
 # cut depth into 3 categories
-cut_depth <- function(x) {
+cut_depth <- function(x, two_depths = FALSE) {
   # x--numeric vector, depth of the layer
+  # two_depths --logical of whether to create two depth categories
+  # (default is 3--for back compatibility)
   stopifnot(x %in% lyr2depth(1:8))
-  cut(x,
-      breaks = c(0, 10, 40, 200),
-      labels = c("0-10 cm", "10-40 cm", "40-150 cm"))
+  out <- if (two_depths) {
+    cut(x,
+        breaks = c(0, 10, 200),
+        labels = c("0-10 cm", "10-150 cm"))
+  } else {
+    cut(x,
+        breaks = c(0, 10, 40, 200),
+        labels = c("0-10 cm", "10-40 cm", "40-150 cm"))
+  }
+  out
 }
 
 # lookup vectors ----------------------------------------------------------

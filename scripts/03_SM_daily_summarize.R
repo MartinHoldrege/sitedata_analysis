@@ -136,9 +136,9 @@ library(dtplyr) # this code crashes (memory constraint I think) when
 
 # grouping by depth group and aridity group
 dly_lyr_means <- dly_lyr_all1 %>%
-  #slice_sample(n = 100) %>%
+  #slice_sample(n = 100) %>% # for testing
   lazy_dt() %>%
-  # slice_sample(n = 1000) %>%  # for testing
+  # slice_sample(n = 1000) %>%
   mutate(depth_group = cut_depth(lyr2depth(layer))) %>%
   select(-EVAPSOIL, -layer) %>%
   group_by(site, day, intensity, warm, SoilTreatment, depth_group) %>%
@@ -162,7 +162,7 @@ dly_lyr_means_all <- dly_lyr_all1 %>%
   filter(warm == "ambient") %>%
   # slice_sample(n = 100) %>% for testing
   lazy_dt() %>%
-  mutate(depth_group = cut_depth(lyr2depth(layer))) %>%
+  mutate(depth_group = cut_depth(lyr2depth(layer), two_depths = TRUE)) %>%
   select(-EVAPSOIL, -layer) %>%
   group_by(site, day, intensity, warm, SoilTreatment, depth_group) %>%
   summarize(TRANSP = sum(TRANSP),
@@ -180,7 +180,6 @@ dly_lyr_means_all <- dly_lyr_all1 %>%
             WETDAY_upr = q2(WETDAY)) %>%
   as_tibble() %>%
   trmts2factors()
-
 
 remove("dly_lyr_all1")
 }
