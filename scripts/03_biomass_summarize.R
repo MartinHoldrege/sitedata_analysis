@@ -128,7 +128,33 @@ bio_SC3Gr <- bio1 %>%
             SGr = mean(SGr),
             .groups = "drop")
 
+# ratio of shrubs to p.warm.grass, for appendix
+# here comparing c4 grasses  to shrubs.
 
+# sites where c4 grasses present under ambient conditions
+c4_sites <- bio1 %>%
+  filter(intensity == "ambient",
+         warm == "ambient",
+         PFT == "p.warm.grass",
+         biomass > 0) %>%
+  pull(site) %>%
+  unique()
+length(c4_sites)
+
+bio_SC4Gr <- bio1 %>%
+  filter(PFT %in% c("sagebrush", "shrub", "p.warm.grass"),
+         site %in% c4_sites) %>%
+  mutate(PFT = ifelse(PFT == "p.warm.grass", "p.warm.grass", "shrub")) %>%
+  group_by(SoilTreatment, intensity, warm, site, PFT) %>%
+  summarise(biomass = sum(biomass),# summing across shrubs
+            # next summarise relies on groups except PFT:
+            .groups = "drop_last") %>%
+  summarize(SGr = biomass[PFT == "shrub"]/biomass[PFT == "p.warm.grass"],
+            .groups = "drop_last") %>% # collapsing to plot level
+  filter(is.finite(SGr)) %>% # if 0 grass the ratio is undefined
+  summarize(SGr_se = plotrix::std.error(SGr), # across plots
+            SGr = mean(SGr),
+            .groups = "drop")
 
 # four main PFTs (c3 and c4 grasses seperate)
 bio_pft4_diff <- bio1 %>%
