@@ -136,9 +136,8 @@ library(dtplyr) # this code crashes (memory constraint I think) when
 
 # grouping by depth group and aridity group
 dly_lyr_means <- dly_lyr_all1 %>%
-  #slice_sample(n = 100) %>% # for testing
+#  slice_sample(n = 100) %>% # for testing
   lazy_dt() %>%
-  # slice_sample(n = 1000) %>%
   mutate(depth_group = cut_depth(lyr2depth(layer))) %>%
   select(-EVAPSOIL, -layer) %>%
   group_by(site, day, intensity, warm, SoilTreatment, depth_group) %>%
@@ -147,12 +146,13 @@ dly_lyr_means <- dly_lyr_all1 %>%
             WETDAY = mean(WETDAY),
             .groups = "drop") %>%
   left_join(aridity1, by = "site") %>%
+  as_tibble() %>% # back to tibble so that subsequent across() works
   # now averaging across sites
   group_by(day, intensity, warm, SoilTreatment, depth_group, aridity_group) %>%
   # note for now not calculating upr and lwr to reduce computation
+
   summarize(across(c("TRANSP", "VWCMATRIC", "WETDAY"),
                    .fns = list(mean = ~mean(.x, na.rm = TRUE)))) %>%
-  as_tibble() %>%
   trmts2factors()
 
 

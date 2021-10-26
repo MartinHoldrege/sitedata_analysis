@@ -204,8 +204,8 @@ break_labels[c(1, 5, 9)] <-  c("Jan", "May", "Sept")
 
 # all intensity levels
 p_all <-  dly_lyr_means_all %>%
-  mutate(lab1 = add_letters(depth_group, letters = letters),
-         lab2 = add_letters(depth_group, letters = letters[3:4])) %>%
+  mutate(lab1 = add_letters(depth_group, letters = c("a", "c")),
+         lab2 = add_letters(depth_group, letters = c("b", "d"))) %>%
   ggplot(aes(x = day, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   scale_x_continuous(breaks = break_doys,
