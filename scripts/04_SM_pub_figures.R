@@ -407,17 +407,30 @@ dev.off()
 
 # aridity vs PFT transp -------------------------------------------------
 
-# 3 panels, transpiration for shrubs, grasses and forbs
-jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
-     height = 7, width = 2.5, units = 'in')
-g0 <- tot_transp_pft_diff %>%
+# df for figure making
+tot_transp_pft_diff2 <- tot_transp_pft_diff %>%
   filter(SoilTreatment == "loam",
          warm == "ambient",
          PFT != "total") %>%
   mutate(PFT = factor(PFT, levels = c("shrub", "grass", "forbs"),
                       labels = c("shrub", "grass", "forb")),
          PFT_lab = add_letters(PFT)) %>%
-  ggplot(aes(x = aridity_index, color = intensity)) +
+  ungroup()
+
+# creating fake data for forbs so axis limits will be the same as grass
+limit_df <- tot_transp_pft_diff2 %>%
+  ungroup() %>%
+  filter(PFT == "grass") %>%
+  filter(TRANSP_diff %in% range(TRANSP_diff)) %>%
+  # this line needed b/ of facet_wrap
+  mutate(PFT_lab = add_letters(factor("forb"), "c"))
+
+
+# 3 panels, transpiration for shrubs, grasses and forbs
+jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
+     height = 7, width = 2.5, units = 'in')
+g0 <- ggplot(tot_transp_pft_diff2,
+             aes(x = aridity_index, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   labs(y = "Transpiration change (cm)") +
   geom_hline(yintercept = 0, linetype = 2,
@@ -427,11 +440,12 @@ g0 <- tot_transp_pft_diff %>%
         # allows text to render as markdown
         strip.text = ggtext::element_markdown(hjust = 0)) +
   lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 1) +
-
   guides(color = guide_legend(ncol = 1))
+
 g <- g0 +
-  geom_point(aes(x = aridity_index, y = TRANSP_diff), size = 0.5) +
-  geom_smooth(aes(x = aridity_index,y = TRANSP_diff), se = FALSE) +
+  geom_blank(data = limit_df, aes(y = TRANSP_diff))+
+  geom_point(aes(y = TRANSP_diff), size = 0.5) +
+  geom_smooth(aes(y = TRANSP_diff), se = FALSE) +
   labs(x = aridity_lab)
 g
 dev.off()
