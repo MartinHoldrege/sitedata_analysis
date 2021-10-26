@@ -408,7 +408,7 @@ dev.off()
 # aridity vs PFT transp -------------------------------------------------
 
 # 3 panels, transpiration for shrubs, grasses and forbs
-jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
+jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid_fixed-y.jpeg", res = 600,
      height = 7, width = 2.5, units = 'in')
 g0 <- tot_transp_pft_diff %>%
   filter(SoilTreatment == "loam",
@@ -426,7 +426,7 @@ g0 <- tot_transp_pft_diff %>%
         legend.position = "top",
         # allows text to render as markdown
         strip.text = ggtext::element_markdown(hjust = 0)) +
-  lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 1) +
+  lemon::facet_rep_wrap(~PFT_lab, ncol = 1) +
 
   guides(color = guide_legend(ncol = 1))
 g <- g0 +
