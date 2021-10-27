@@ -161,7 +161,7 @@ tm_style(style = "white",
           breaks = c(0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 10),
           palette = RColorBrewer::brewer.pal(11, "RdYlBu")[c(2:7, 9)],
           labels = c("< 0.2", "0.2 - 0.3", "0.3 - 0.4", "0.4 - 0.5", "0.5 - 0.6",
-                     "0.6 - 0.7", "> 07"),
+                     "0.6 - 0.7", "> 0.7"),
           title = "Aridity Index",
           size = 0.4,
           shape = 16)
