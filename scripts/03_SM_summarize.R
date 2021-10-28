@@ -274,6 +274,7 @@ df2 <- df %>%
 # * transp by PFT and total --------------------------------------------------
 # dataframe includes both total transp and transp by pft
 
+arid_range <- range(aridity1$aridity_index)
 
 # so predictions are just inside the range of the data
 arid_range <-  round(arid_range, 3) + c(0.001, -0.001)
