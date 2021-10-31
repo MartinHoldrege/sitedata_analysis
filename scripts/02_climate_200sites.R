@@ -91,6 +91,14 @@ aridity1 <- amb_means %>%
 
 write_csv(aridity1, "data-processed/aridity_by_site.csv")
 
+
+# descriptive statistics --------------------------------------------------
+
+options(pillar.sigfig = 4)
+aridity1 %>%
+  summarize(across(.cols = c("TEMP_avg_C_Mean", "PRECIP_ppt_Mean"),
+                   .fns = list(min = min, max = max)))
+
 # figures -----------------------------------------------------------------
 
 vline_df <- tibble(
