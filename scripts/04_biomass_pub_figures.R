@@ -71,8 +71,15 @@ create_trmt_labels_all <- function(df) {
                     levels = c("control", levels(df2$trmt_group))),
            trmt_lab =
              factor(trmt_lab,
-                    levels = rev(c("control", levels(df2$trmt_lab))))
+                    levels = rev(c("control", levels(df2$trmt_lab)))),
     )
+  # justify (for use when labels on x axis and rotated 90 degrees,
+  # so all touch tick marks)--not fully working, but better
+  width <- max(str_length(out$trmt_lab)) + 1
+  out$trmt_lab <- fct_relabel(.f = out$trmt_lab, .fun = str_pad,
+                              width = width) %>%
+    fct_rev()
+  out
 }
 
 
@@ -102,9 +109,11 @@ SGr_base <- function() {
     scale_color_manual(values = c("control" = "black", cols_group)),
     theme(legend.position = "top",
           legend.title = element_blank(),
-          legend.text = element_text(size = 8)),
+          legend.text = element_text(size = 8),
+          axis.text.x = element_text(angle = 90, vjust = 0.5)),
     guides(color = guide_legend(ncol = 1)),
-    labs(y = "Treatment")
+    labs(y = "Treatment"),
+    coord_flip()
   )
 }
 # boxplot--by pft and trmt ------------------------------------------------
@@ -170,7 +179,7 @@ dev.off()
 bio_SC3Gr_2 <- create_trmt_labels_all(bio_SC3Gr)
 
 # for vertical line
-ctrl_mean <- with(bio_SC3Gr_2, mean(SGr[trmt_lab == "control"]))
+ctrl_mean <- with(bio_SC3Gr_2, mean(SGr[str_detect(trmt_lab, "control")]))
 
 jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio.jpeg",
      res = 600, height = 4,  width = 3, units = 'in')
@@ -187,7 +196,7 @@ dev.off()
 bio_SGr_2 <- create_trmt_labels_all(bio_SGr_m)
 
 # for vertical line
-ctrl_mean <- with(bio_SGr_2, mean(SGr[trmt_lab == "control"]))
+ctrl_mean <- with(bio_SGr_2, mean(SGr[str_detect(trmt_lab, "control")]))
 
 jpeg("figures/biomass/pub_qual/BDOT_shrub-total-grass-ratio.jpeg",
      res = 600, height = 4,  width = 3, units = 'in')
@@ -206,7 +215,7 @@ dev.off()
 bio_SC4Gr_2 <- create_trmt_labels_all(bio_SC4Gr)
 
 # for vertical line
-ctrl_mean <- with(bio_SC4Gr_2, mean(SGr[trmt_lab == "control"]))
+ctrl_mean <- with(bio_SC4Gr_2, mean(SGr[str_detect(trmt_lab, "control")]))
 
 jpeg("figures/biomass/pub_qual/BDOT_shrub-C4-grass-ratio.jpeg",
      res = 600, height = 4,  width = 3, units = 'in')
