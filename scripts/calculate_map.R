@@ -1,5 +1,8 @@
 # Martin Holdrege
 
+# No longer using this script--purpose was calculate mean annual ppt
+# but I know do that in 02_climate_200sites.R
+
 # Script started March 24, 20
 
 # dependencies ------------------------------------------------------------

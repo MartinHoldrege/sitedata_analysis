@@ -21,7 +21,7 @@ Scripts in bold are needed to recreate the main analyses in the manuscript, usin
 (which includes the output from the `01_summary_dfs_200sites.R` script). 
 To run these scripts in bold, the following data files from the associated zenodo data repository should be put
 in the `data-processed>site_means` folder: biomass_mean_v1.csv, dly_mean_by_lyr-all_v1.csv, dly_mean_by_lyr-PFT_v1.csv, 
-sw2_dly_means_v1.csv, sw2_yr_means_v1.csv, yr_mean_by_lyr-all_v1.csv, yr_mean_by_lyr-PFT_v1.csv. Alternatively, just
+sw2_dly_means_v1.csv, sw2_yr_means_v1.csv, yr_mean_by_lyr-all_v1.csv, yr_mean_by_lyr-PFT_v1.csv, sw2_mo_means_v1.csv. Alternatively, just
 adjust the file paths to where ever you put those files. 
 
 Contact me (martinholdrege at gmail dot com) if there are questions about this repository. 
@@ -35,8 +35,8 @@ This sources publicly available data (kindly provided by J. Bradford), that I di
 `01_summary_dfs_200sites.R`--this script takes the raw output (SQL databases) from STEPWAT2, and creates summary dataframes (output as csv's). 
 The the raw data is large (>100 Gb) so are not put on Zenodo. But the summary files created by these scripts are on Zenodo. 
 This scripts averages over years, and iterations for each plot. All downstream analysis of model output is based on the csv's created here. 
-Summary files of monthly values (e.g. mean monthly transpiration) are also created by this scrpt, but because that data wasn't used in subsequent
-analyses it won't be put on Zenodo. 
+Summary files of monthly values (e.g. mean monthly transpiration) are also created by this scrpt, but files which are not used in subsequent
+analyses aren't put on Zenodo. 
 
 **`02_climate_200sites.R`**--extracts the average climate data for each site (based on files created in `01_summary_dfs_200sites.R`) script. Calculates aridity index. 
 The climate csv created in this script is used in subsequent summarizing scripts. 
