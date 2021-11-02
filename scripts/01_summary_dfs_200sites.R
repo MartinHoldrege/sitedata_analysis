@@ -2,7 +2,7 @@
 
 # Script started April 12, 2021
 
-# purpose is to create summary csv files of the weather database info
+# purpose is to create summary csv files of database output
 # from full runs for all 200 sites
 
 # dependencies ------------------------------------------------------------
