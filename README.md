@@ -5,7 +5,8 @@ Simulations conducted for 200 sites across the western U.S.
 
 # Description of important scripts.
 
-R scripts are found in the `scripts` folder.
+R scripts are found in the `scripts` folder. Other folders are empty 
+(i.e. because their contents are data, figures etc. which I don't track with git). 
 
 "SM" stands for soil moisture
 
