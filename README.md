@@ -15,7 +15,6 @@ Usually this means an earlier script is sourced by a later script, or the output
 Exceptions always exist. All dependencies and files loaded, are at the top of scripts, so examine what upstream scripts are used (i.e. `source()`),
 and what csv files are read in. 
 
-Additionally, scripts with "14sites" in the name, can be ignored, they are early scripts used to check output of test runs of stepwat2, not the full dataset of 200 sites.
 
 Scripts in bold are needed to recreate the main analyses in the manuscript, using summarized data provided on Zenodo 
 (which includes the output from the `01_summary_dfs_200sites.R` script). 
