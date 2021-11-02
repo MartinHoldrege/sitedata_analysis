@@ -16,11 +16,14 @@ and what csv files are read in.
 
 Additionally, scripts with "14sites" in the name, can be ignored, they are early scripts used to check output of test runs of stepwat2, not the full dataset of 200 sites.
 
-To run scripts that start with 02_ the summary data files provided on Zenodo will needed to be used, and appropriate file names changed. 
+Scripts in bold are needed to recreate the main analyses in the manuscript, using summarized data provided on Zenodo 
+(which includes the output from the `01_summary_dfs_200sites.R` script). 
+To run these scripts in bold, the following data files from the associated zenodo data repository should be put
+in the `data-processed>site_means` folder: biomass_mean_v1.csv, dly_mean_by_lyr-all_v1.csv, dly_mean_by_lyr-PFT_v1.csv, 
+sw2_dly_means_v1.csv, sw2_yr_means_v1.csv, yr_mean_by_lyr-all_v1.csv, yr_mean_by_lyr-PFT_v1.csv. Alternatively, just
+adjust the file paths to where ever you put those files. 
 
 Contact me (martinholdrege at gmail dot com) if there are questions about this repository. 
-
-Scripts in bold are needed to recreate the main analyses in the manuscript, using summarized data provided on Zenodo (which includes the output from the `01_summary_dfs_200sites.R` script). 
 
 ## Summarizing/analysis/etc. scripts
 
@@ -65,7 +68,7 @@ plant functional types. Not puplication quality.
 
 **`04_SM_pub_figures.R`**--more restricted set of figures of soil moisture (and other ecohydrological) responses. 
 Higher quality, some of these included in manuscript. 
-This script uses output dataframes generated in `03_SM_daily_summariz.R` and `03_SM_summariz.R`
+This script uses output dataframes generated in `03_SM_daily_summarize.R` and `03_SM_summarize.R`
 
 ## Misc utility scripts:
 
@@ -75,13 +78,11 @@ This script uses output dataframes generated in `03_SM_daily_summariz.R` and `03
 
 ## Other misc.
 
-site_map.R--maps of the sites (some of these maps are only reproducible with all underlying geographic data--not included here). 
+`site_map.R`--maps of the sites (some of these maps are only reproducible with all underlying geographic data--not included here). 
 
-logfile_issues.R--examination of some logfile warnings etc. from STEPWAT2 simulations. 
+`logfile_issues.R`--examination of some logfile warnings etc. from STEPWAT2 simulations. 
 
 `root_profile.R`--comparison of how root profiles used in STEPWAT2 compare to ones estimated in a tracer study by A. Kulmatiski. (data
 not included here--profiles look very similar). 
-
-
 
 
