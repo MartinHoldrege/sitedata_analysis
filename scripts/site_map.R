@@ -16,7 +16,8 @@ library(sf)
 # * site locations --------------------------------------------------------
 
 # info on the 200 sites simulations will be run for
-site1 <- readxl::read_xlsx("../dbWeather/200sites.xlsx")
+# this information was also in 200sites.xlsx file
+site1 <- read_csv("data-raw/site_locations.csv")
 
 # * MAP -------------------------------------------------------------------
 # mean annual precip from WORLCLIM
