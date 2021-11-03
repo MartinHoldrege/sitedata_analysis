@@ -4,8 +4,6 @@
 
 # Purpose--to make publication quality figures of soil moisture data
 
-# Next: consider adding tags (a), (b)... etc. to all multipanel figures
-
 
 # dependencies ------------------------------------------------------------
 
@@ -20,6 +18,7 @@ source("scripts/03_SM_summarize.R")
 
 # mean transpiration and wet days for each day of year across sites
 # also 5th and 95th percentiles
+# this file created in '03_SM_daily_summarize.R' script
 dly_lyr_means_all <- readRDS("data-processed/dly_lyr_means_all.RDS")
 
 
@@ -52,14 +51,11 @@ theme_update(strip.background = element_blank(),
              # increasing right margin so numbers not cutoff
              plot.margin = unit(c(5.5, 10, 5.5, 5.5), "points"))
 
-
-
 # depth boxplot ---------------------------------------------------------
 # transpiration vs depth by intensity treatment
 
 breaks <- c(0, -50, -100)
 break_labels <- as.character(-breaks)
-
 
 
 # * by soil texture -------------------------------------------------------
@@ -157,32 +153,30 @@ dev.off()
 jpeg("figures/soil_moisture/pub_qual/TDOT_transp_v_depth.jpg",
      res = 800,
      height = 3,
-     width = 2.2,
+     width = 3,
      units = 'in')
-
 
 lyr_pft_diff_0l %>%
   filter(intensity == "2x intensity",
-         PFT %in% c("grass", "shrub")) %>%
+         PFT %in% c("total", "grass", "shrub")) %>%
   group_by(depth, PFT) %>%
   summarize(TRANSP_diff_se = plotrix::std.error(TRANSP_diff),
             TRANSP_diff = mean(TRANSP_diff),
             .groups = "drop") %>%
-  mutate(PFT_lab = add_letters(factor(PFT, levels = c("shrub", "grass")))) %>%
-  ggplot(aes(x = -depth, y = TRANSP_diff)) +
+  ggplot(data = ., aes(x = -depth, y = TRANSP_diff, group = PFT, color = PFT)) +
   geom_line(alpha = 0.8) +
-  geom_point(color = cols_intensity["2x intensity"],
-             size = 1) +
+  geom_point(size = 1) +
   geom_errorbar(aes(ymin = TRANSP_diff - TRANSP_diff_se,
-                    ymax = TRANSP_diff + TRANSP_diff_se),
-                color = cols_intensity["2x intensity"]) +
+                    ymax = TRANSP_diff + TRANSP_diff_se)) +
   geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
   coord_flip() +
-  lemon::facet_rep_wrap(~PFT_lab, ncol = 1) +
   scale_x_continuous(breaks = breaks, labels = break_labels) +
   labs(x = depth_lab,
        y = "Transpiration change (cm)") +
-  theme(strip.text = ggtext::element_markdown(hjust = 0))
+  theme(legend.position = "top",
+        legend.title = element_blank()) +
+  scale_color_manual(
+    values = c("total" = "black", "grass" = "#5ab4ac", "shrub" = "#d8b365"))
 
 dev.off()
 
