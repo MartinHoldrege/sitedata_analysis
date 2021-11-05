@@ -112,16 +112,16 @@ bio_SGr_m <- bio_SGr1 %>%
             SGr = mean(SGr),
             .groups = "drop")
 
-# ratio of shrubs to p.cool.grass, for dotplot in manuscript
-# here comparing c3 grasses (excluding cheatgrass) to shrubs (c3)
+# ratio of shrubs to all C3 grasses, for dotplot in manuscript
 bio_SC3Gr <- bio1 %>%
-  filter(PFT %in% c("sagebrush", "shrub", "p.cool.grass")) %>%
-  mutate(PFT = ifelse(PFT == "p.cool.grass", "p.cool.grass", "shrub")) %>%
+  filter(PFT %in% c("sagebrush", "shrub", "p.cool.grass", "a.cool.grass")) %>%
+  mutate(PFT = ifelse(PFT %in% c("p.cool.grass", "a.cool.grass"),
+                      "C3 grass", "shrub")) %>%
   group_by(SoilTreatment, intensity, warm, site, PFT) %>%
   summarise(biomass = sum(biomass),# summing across shrubs
             # next summarise relies on groups except PFT:
             .groups = "drop_last") %>%
-  summarize(SGr = biomass[PFT == "shrub"]/biomass[PFT == "p.cool.grass"],
+  summarize(SGr = biomass[PFT == "shrub"]/biomass[PFT == "C3 grass"],
             .groups = "drop_last") %>% # collapsing to plot level
   filter(is.finite(SGr)) %>% # if 0 grass the ratio is undefined
   summarize(SGr_se = plotrix::std.error(SGr), # across plots
@@ -208,6 +208,21 @@ pft4_summary %>%
   print.data.frame()
 
 (69.7 - 37.4)/37.4*100
+
+
+# * primary PFTs ----------------------------------------------------------
+# mean changes in biomass of all the main PFT categories
+# (this lumps all forbs but keeps everything else seperate)
+prime_pft_smry <- bio_prime_PFT_diff1 %>%
+  filter(SoilTreatment == "loam") %>%
+  ungroup() %>%
+  group_by(prime_PFT, warm, intensity) %>%
+  summarize(across(c("bio_diff", "bio_perc_diff"),
+                   .fns = mean))
+
+prime_pft_smry %>%
+  filter((intensity == "2x intensity" & warm %in% c("ambient", "3C warming")) |
+           (intensity == "ambient" & warm == "3C warming"))
 # fitting loess curves ----------------------------------------------------
 
 # geom_smooth uses stats::loess, which is what I'm using here
