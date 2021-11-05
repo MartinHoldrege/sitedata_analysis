@@ -51,8 +51,18 @@ create_trmt_labels <- function(df) {
   out
 }
 
+pad_labels <- function(trmt_lab) {
+  # justify labels (for use when labels on x axis and rotated 90 degrees,
+  # so all touch tick marks)--not fully working, but better
+  width <- max(str_length(trmt_lab)) + 1
+  out <- fct_relabel(.f = trmt_lab, .fun = str_pad,
+                     width = width)
+  out
+}
+
 # function for adding trmt labels to all trmt levels,
-# including control. For use in dotplots of absolute numbers by treatment (not difference from control)
+# including control. For use in dotplots of absolute numbers by treatment
+# (not difference from control)
 create_trmt_labels_all <- function(df) {
   # adding labels for figure
   df2 <- df %>%
@@ -73,11 +83,8 @@ create_trmt_labels_all <- function(df) {
              factor(trmt_lab,
                     levels = rev(c("control", levels(df2$trmt_lab)))),
     )
-  # justify (for use when labels on x axis and rotated 90 degrees,
-  # so all touch tick marks)--not fully working, but better
-  width <- max(str_length(out$trmt_lab)) + 1
-  out$trmt_lab <- fct_relabel(.f = out$trmt_lab, .fun = str_pad,
-                              width = width) %>%
+  # justify labels (for use when labels on x axis and rotated 90 degrees,
+  out$trmt_lab <- pad_label(out$trmt_lab)%>%
     fct_rev()
   out
 }
@@ -170,25 +177,61 @@ dev.off()
 
 # dotplot--shrub:grass ----------------------------------------------------
 
-
-
-
 # * shrub to c3 -----------------------------------------------------------
-# ratio of shrubs to perennial C3 grasses
+# ratio of shrubs to perennial C3 grasses, this is a 3 panel
+# figure, with first panel being the shrub:c3 dotplot, and the other
+# to being shrub and grass change changes (dotplots)
 
-bio_SC3Gr_2 <- create_trmt_labels_all(bio_SC3Gr)
+bio_SC3Gr_2 <- create_trmt_labels_all(bio_SC3Gr) %>%
+  mutate(label = "**(a)**") # for corner of plot
 
 # for vertical line
 ctrl_mean <- with(bio_SC3Gr_2, mean(SGr[str_detect(trmt_lab, "control")]))
 
-jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio.jpeg",
-     res = 600, height = 4,  width = 3, units = 'in')
-
-ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
+# dotplot of ratios
+g1 <- ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
   SGr_base() +
-  labs(x = "Shrub:C3 grass")
+  labs(x = "Shrub:C3 grass") +
+  # so that letter "a" shows up:
+  facet_wrap(~label) +
+  theme(strip.text = ggtext::element_markdown(hjust = 0))
+
+# dotplot of differences by treatment for shrubs and C3 perennial grasses
+g2 <- bio_prime2_PFT_diff_m %>%
+  rename(PFT = prime_PFT) %>%
+  filter(PFT %in% c("shrub", "p.cool.grass")) %>%
+  create_trmt_labels() %>%
+  mutate(
+    PFT = factor(PFT, levels = c("shrub", "p.cool.grass"),
+                 labels = c("shrub", "C3 grass")),
+    PFT_label = add_letters(PFT, letters = c("b", "c")),
+    trmt_lab = pad_labels(trmt_lab) # pad the labels with space
+    ) %>%
+  ggplot(aes(trmt_lab, bio_diff_m, color = trmt_group)) +
+  geom_hline(yintercept = 0, linetype = 2, alpha = 0.7) +
+  geom_point() +
+  geom_errorbar(aes(ymin = bio_diff_m - bio_diff_se,
+                    ymax = bio_diff_m + bio_diff_se)) +
+  lemon::facet_rep_wrap(~PFT_label, ncol = 1, scales = "free_y")+
+  theme(strip.text = ggtext::element_markdown(hjust = 0),
+        legend.position = "none",
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  scale_color_manual(values = cols_group) +
+  labs(y = bio_lab1_change,
+       x = "Treatment")
+
+
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio.jpeg",
+     res = 600, height = 4,  width = 5, units = 'in')
+
+grid.arrange(g1, g2,
+             layout_matrix = rbind(c(1, 2)))
 
 dev.off()
+
+
+
+
 
 # * shrub: total grass ----------------------------------------------------
 # ratio of shrubs to all grasses
@@ -204,6 +247,7 @@ jpeg("figures/biomass/pub_qual/BDOT_shrub-total-grass-ratio.jpeg",
 ggplot(bio_SGr_2, aes(SGr, trmt_lab, color = trmt_group)) +
   SGr_base() +
   labs(x = "Shrub:total grass")
+
 
 dev.off()
 

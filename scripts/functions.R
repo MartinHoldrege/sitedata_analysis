@@ -59,13 +59,16 @@ intensity_lookup <- c("ambient" = "ambient",
 #'
 #' @param x vector of plant functional types, as defined in the Biomass
 #' rSFSTEP2 table
+#' @param combine_shrubs logical whether to group sagebrush and 'other shrub'
+#' into one category
 #'
 #' @return factor of aggregated PFTS
 #' @export
 #'
 #' @examples
-#' prime_PFT(c("a.cool.forb", "blah", "sagebrush"))
-prime_PFT <- function(x) {
+#' prime_PFT(c("a.cool.forb", "blah","shrub", "sagebrush"))
+#' prime_PFT(c("shrub", "sagebrush"), combine_shrubs = TRUE)
+prime_PFT <- function(x, combine_shrubs = FALSE) {
 
   PFT_lookup <- c("sagebrush" = "sagebrush",
                   "shrub" = "other shrub",
@@ -77,18 +80,24 @@ prime_PFT <- function(x) {
                   "p.cool.grass" = "p.cool.grass",
                   "p.warm.grass" = "p.warm.grass")
 
+  # combine both shrubs
+  if (combine_shrubs) {
+    PFT_lookup[c("sagebrush", "shrub")] <- "shrub"
+  }
+
   stopifnot(is.character(x),
             # if FALSE unlikely input is what is wanted
             any(x %in% names(PFT_lookup))
   )
-  out <- factor(PFT_lookup[x],
-                levels = c("sagebrush",
-                           "other shrub",
-                           "a.cool.grass",
-                           "p.cool.grass",
-                           "p.warm.grass",
-                           "forb")
-  )
+
+  levels <- if (combine_shrubs) {
+    c("shrub", "a.cool.grass", "p.cool.grass", "p.warm.grass", "forb")
+  } else {
+    c("sagebrush", "other shrub", "a.cool.grass", "p.cool.grass",
+      "p.warm.grass", "forb")
+  }
+
+  out <- factor(PFT_lookup[x], levels = levels)
   out
 }
 

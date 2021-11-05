@@ -71,6 +71,25 @@ bio_prime_PFT_diff1 <- bio_prime_PFT1 %>%
     bio_perc_diff = calc_perc_diff(biomass, intensity, warm)) %>%
   filter(!(intensity == "ambient" & warm == "ambient"))
 
+# mean biomass diff of pimary PFTs--accept all shrubs combined
+bio_prime2_PFT_diff_m <- bio1 %>%
+  # primary pft groups
+  mutate(prime_PFT = prime_PFT(PFT, combine_shrubs = TRUE)) %>%
+  filter(!is.na(.data$prime_PFT)) %>%
+  group_by(site, SoilTreatment, prime_PFT, warm, intensity) %>%
+  summarize(biomass = sum(biomass), .groups = "drop") %>%
+  left_join(aridity1, by = "site") %>%
+  group_by(SoilTreatment, prime_PFT, site) %>%
+  mutate(# difference in biomass
+    bio_diff = calc_diff(biomass, intensity, warm),
+    bio_perc_diff = calc_perc_diff(biomass, intensity, warm)) %>%
+  filter(!(intensity == "ambient" & warm == "ambient")) %>%
+  group_by(SoilTreatment, prime_PFT, warm, intensity) %>% # summarizing across plots
+  summarize(across(c("bio_diff", "bio_perc_diff"),
+                   .fns = list(m = mean, se = plotrix::std.error)),
+            .groups = "drop")
+
+
 # biomass for shrubs and grasses only
 bio_SG1 <- bio1 %>%
   mutate(SG = SG_lookup[PFT]) %>%
