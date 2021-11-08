@@ -321,6 +321,7 @@ dev.off()
 # * no warming, PFT4 ------------------------------------------------------
 # delta biomass vs aridity, for 3 PFTs for each intensity trmt
 # 0 warming/loam
+
 bio_pft4_diff_0l <- bio_pft4_diff %>%
   filter(warm == "ambient",
          intensity != "ambient",
@@ -330,12 +331,11 @@ bio_pft4_diff_0l <- bio_pft4_diff %>%
 jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4.jpeg", res = 600,
      height = 4, width = 4, units = 'in')
 
+
 # defining locationgs of breaks
 breaks_fun <- function(x) {
   out <- if (max(x) > 100) {
     c(-50, 0, 50, 100, 150)
-  } else if (max(x) < 5) {
-    c(-4, -2, 0, 2, 4)
   } else {
     c(-10, -5, 0, 5, 10)
   }
@@ -353,14 +353,15 @@ g <- ggplot(bio_pft4_diff_0l,
         legend.position = "top",
         strip.text = ggtext::element_markdown(hjust = 0)) +
   lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 2) +
-
-  scale_y_continuous(breaks = breaks_fun) +
-  guides(color = guide_legend(ncol = 2))
+  guides(color = guide_legend(ncol = 2)) +
+  scale_y_continuous(breaks = breaks_fun)
 
 g +
   geom_point(aes(x = aridity_index), size = 0.5) +
   geom_smooth(aes(x = aridity_index), se = FALSE) +
-  labs(x = aridity_lab)
+  labs(x = aridity_lab) +
+  # so herbaceous plants all have the same limits
+  expand_limits(y = c(-11, 13))
 
 dev.off()
 
