@@ -37,7 +37,7 @@ attr[stringr::str_detect(attr$ECOLSYS_LU, "[Ss]agebrush"),
 
 # get paths to all rasters
 # rasters for each western state are in seperate folders.
-r_paths <- list.files("data-raw/GAP/", recursive = TRUE,
+r_paths <- list.files("data-raw/GAP", recursive = TRUE,
                       pattern = "^gaplf2011lc_v30_[a-z]{2}.tif$",
                       full.names = TRUE)
 r_paths
@@ -48,25 +48,27 @@ r_paths
 # https://github.com/rspatial/terra/issues/210
 r1 <- vrt(r_paths, "data-raw/GAP/GAP_states_combined.vrt", overwrite=TRUE)
 
-# coarsen -----------------------------------------------------------------
-# reduce the resolution--currently 30*30 m, now combining every set
-# of 100 cells into one cell, based on the most common (modal) value
 
-r2 <- aggregate(r1, fact = 10, fun = "modal")
 
 # select sagebrush pixels -------------------------------------------------
 
 # pixels that are big sagebrush dominant, as defined by Schlaepfer 2012
-# get converted to 1, everything else becomes NA
+# get converted to 1, everything else becomes 0.
+# using 0 so can use max function in aggregate below
 
-m <- c(0, 488, NA, # this row means values from 0 to 488 become NA
+m <- c(0, 488, 0, # this row means values from 0 to 488 become NA
        489, 491, 1, # 489-491 are big sagebrush ecosystems
-       492, 7000, NA)
+       492, 7000, 0)
 rclmat <- matrix(m, ncol = 3, byrow = TRUE)
-r3 <- classify(r2, rcl = rclmat, right = NA) # reclassify matrix values
+r2 <- classify(r1, rcl = rclmat, right = NA) # reclassify matrix values
 
+
+# coarsen -----------------------------------------------------------------
+# reduce the resolution--currently 30*30 m, using mean, so that
+# later can decide at what cuttoff to call a cell sagebrush.
+
+r3 <- aggregate(r2, fact = 30, fun = "mean")
 plot(r3)
-
 
 # save file ---------------------------------------------------------------
 
