@@ -112,17 +112,29 @@ SG_lookup <-  c("sagebrush" = "total_shrub",
 
 #' Four main PFTs
 #'
+#' @description Currently, this function is by default
+#' # only including perennials
+#' in the C3 grass category, b/ the manuscript focuses on just those mose
+#' dominant PFTs
+#'
 #' @param x vector of original 10 PFTs
+#' @param exclude_annualC3 logical--whether to exclude annuals from the
+#' C3 grass category.
 #'
 #' @return vector with 4 PFTs (C3 and C4 grasses seperate)
 #' @export
-PFT_four <- function(x) {
+PFT_four <- function(x, exclude_annualC3 = TRUE) {
   pft4_lookup <- c("sagebrush" = "shrub",
                    "other shrub" = "shrub",
-                   "a.cool.grass" = "C3 grass",
-                   "p.coo.grass" = "C3 grass",
+                   "a.cool.grass" = NA,
+                   "p.cool.grass" = "C3 grass",
                    "p.warm.grass" = "C4 grass",
                    "forb" = "forb")
+  if(!exclude_annualC3) {
+    pft4_lookup["a.cool.grass"] <- "C3 grass"
+  }
+
+
   pft_prime <- prime_PFT(x)
   out <- pft4_lookup[pft_prime]
   out <- factor(out, levels = unique(pft4_lookup))
@@ -142,7 +154,9 @@ PFT_three <- function(x) {
                    "C3 grass" = "grass",
                    "C4 grass" = "grass",
                    "forb" = "forb")
-  pft4 <- PFT_four(x)
+
+  # here want all grasses--so not excluding any annual grasses
+  pft4 <- PFT_four(x, exclude_annualC3 = FALSE)
   out <- pft3_lookup[pft4]
   out <- factor(out, levels = unique(pft3_lookup))
   #stopifnot(all(!is.na(out)))

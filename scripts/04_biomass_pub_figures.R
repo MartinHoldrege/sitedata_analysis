@@ -84,7 +84,7 @@ create_trmt_labels_all <- function(df) {
                     levels = rev(c("control", levels(df2$trmt_lab)))),
     )
   # justify labels (for use when labels on x axis and rotated 90 degrees,
-  out$trmt_lab <- pad_label(out$trmt_lab)%>%
+  out$trmt_lab <- pad_labels(out$trmt_lab)%>%
     fct_rev()
   out
 }
@@ -224,13 +224,10 @@ g2 <- bio_prime2_PFT_diff_m %>%
 jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio.jpeg",
      res = 600, height = 4,  width = 5, units = 'in')
 
-grid.arrange(g1, g2,
-             layout_matrix = rbind(c(1, 2)))
+gridExtra::grid.arrange(g1, g2,
+                        layout_matrix = rbind(c(1, 2)))
 
 dev.off()
-
-
-
 
 
 # * shrub: total grass ----------------------------------------------------

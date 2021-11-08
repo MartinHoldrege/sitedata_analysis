@@ -131,6 +131,7 @@ bio_SGr_m <- bio_SGr1 %>%
             SGr = mean(SGr),
             .groups = "drop")
 
+
 # ratio of shrubs to p.cool.grass, for dotplot in manuscript
 # here comparing c3 grasses (excluding cheatgrass) to shrubs (c3)
 bio_SC3Gr <- bio1 %>%
