@@ -365,6 +365,34 @@ g +
 dev.off()
 
 
+# * for graphical abstract ------------------------------------------------
+# shrubs biomass vs aridity, for 2x intensity.
+# points colored by aridity to match plot map--for use in graphical abstract
+
+jpeg("figures/biomass/pub_qual/shrub_vs_arid_2x.jpeg", res = 800,
+     height = 3, width = 3.5, units = 'in')
+
+bio_pft4_diff_0l %>%
+  filter(PFT == "shrub",
+         intensity == "2x intensity") %>%
+  # same breaks and colore palette as are in site map
+  mutate(arid_group = cut(aridity_index,
+                          breaks = c(0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 10))
+  ) %>%
+  ggplot(aes(x = aridity_index,
+             y = bio_diff,
+             color = arid_group)) +
+  scale_color_manual(values = RColorBrewer::brewer.pal(11, "RdYlBu")[c(2:7, 9)]) +
+  labs(y = expression("Shrub biomass change (" * g ~ m^-2 * ")"),
+       x = "Aridity index (PET/MAP)") +
+  geom_hline(yintercept = 0, linetype = 2,
+             alpha = 0.7) +
+  geom_point() +
+  geom_smooth(se = FALSE, color = "black") +
+  theme(legend.position = "none")
+
+dev.off()
+
 # * pft4 vs MAP ------------------------------------------------------------
 # no warming, biomass change vs MAP (for appendix)
 
