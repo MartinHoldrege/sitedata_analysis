@@ -78,7 +78,11 @@ This script uses output dataframes generated in `03_SM_daily_summarize.R` and `0
 
 ## Other misc.
 
-`site_map.R`--maps of the sites (some of these maps are only reproducible with all underlying geographic data--not included here). 
+`sagebrush_extent.R`--create raster of the approximate  extent of big sagebrush ecosystems
+based on GAP landcover dataset. The raster created here is used in the `site_map.R`
+script.
+
+`site_map.R`--maps of the site locations (some of these maps are only reproducible with all underlying geographic data--not included here). 
 
 `logfile_issues.R`--examination of some logfile warnings etc. from STEPWAT2 simulations. 
 
