@@ -2,13 +2,14 @@
 
 # Script started April 14, 2021
 
-# Purpose is to make a map of the site locations
+# Purpose is to make a map of the site locations, and show extent of sagebrush
+# range on that map
 
 # dependencies ------------------------------------------------------------
 
 library(tidyverse)
 library(tmap) # for making the map
-library(raster) # reading in raster
+library(terra) # for working with raster data
 library(sf)
 
 # read in data ------------------------------------------------------------
@@ -30,6 +31,11 @@ aridity2 <- aridity1 %>%
   right_join(site1, by = c("site" = "site_id"))
 
 
+# * sagebrush extent --------------------------------------------------------
+# raster of sagebrush extent, from GAP data, compiled in sagebrush_extent.R
+
+r3 <- rast("data-processed/sagebrush_extent.tif")
+
 # parse site locations ----------------------------------------------------
 
 # just need coordinates
@@ -40,14 +46,16 @@ site2 <- site1[ , c("site_id", "X_WGS84", "Y_WGS84")]
 
 # convert formats/crs--------------------------------------------------------
 
+crs <- crs(r3)
 states <- tigris::states(cb = TRUE, class = "sf")
 class(states)
-crs <- st_crs(states) # projection
+crs <- st_crs(states) # states map is unprojected
 states2 <- st_transform(states, crs)
-site5 <- SpatialPointsDataFrame(
+site1 <- SpatialPointsDataFrame(
   coords = aridity2[c("X_WGS84", "Y_WGS84")],
   data = aridity2[c("site", "aridity_index", "PRECIP_ppt_Mean")],
-  proj4string = CRS(crs$proj4string))
+  # not projected
+  proj4string = CRS('+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs'))
 
 # bounding box
 bbox_new <- st_bbox(states2) # original bbox
