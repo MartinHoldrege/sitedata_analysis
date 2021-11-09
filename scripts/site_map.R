@@ -92,7 +92,7 @@ tm_style(style = "white",
   tm_shape(r4) +
   tm_raster("GAP_states_combined",
             style = "cat",
-            palette = "#a1d99b",
+            palette = "#016c59", # "#a1d99b",
             legend.show = FALSE) +
   tm_shape(states3, bbox = bbox_new) +
   tm_borders(col = "black") +

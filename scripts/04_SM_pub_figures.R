@@ -145,8 +145,9 @@ g
 dev.off()
 
 
-# depth dotplot -----------------------------------------------------------
-# simplified presentation of transpiration with depth response.
+#* ms -----------------------------------------------------------
+# simplified presentation of transpiration with depth response
+# for figure 2 in ms
 
 # depth vs transpiration for grasses and shrubs, 2x intensity, loam soil
 
@@ -164,11 +165,11 @@ lyr_pft_diff_0l %>%
             TRANSP_diff = mean(TRANSP_diff),
             .groups = "drop") %>%
   ggplot(data = ., aes(x = -depth, y = TRANSP_diff, group = PFT, color = PFT)) +
-  geom_line(alpha = 0.8) +
-  geom_point(size = 1) +
+  geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
+  geom_line(alpha = 1.3) +
+  geom_point(size = 1.8) +
   geom_errorbar(aes(ymin = TRANSP_diff - TRANSP_diff_se,
                     ymax = TRANSP_diff + TRANSP_diff_se)) +
-  geom_hline(yintercept = 0, linetype = 2, alpha = 0.5) +
   coord_flip() +
   scale_x_continuous(breaks = breaks, labels = break_labels) +
   labs(x = depth_lab,
