@@ -197,31 +197,37 @@ g1 <- ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
   theme(strip.text = ggtext::element_markdown(hjust = 0))
 
 # dotplot of differences by treatment for shrubs and C3 perennial grasses
-g2 <- bio_prime2_PFT_diff_m %>%
-  rename(PFT = prime_PFT) %>%
-  filter(PFT %in% c("shrub", "p.cool.grass")) %>%
-  create_trmt_labels() %>%
+df <- bio_pft4%>%
+  filter(PFT %in% c("shrub", "C3 grass")) %>%
+  group_by(warm, PFT, intensity, SoilTreatment) %>%
+  summarize(biomass_m = mean(biomass),
+            biomass_se = plotrix::std.error(biomass)) %>%
+  create_trmt_labels_all() %>%
   mutate(
-    PFT = factor(PFT, levels = c("shrub", "p.cool.grass"),
-                 labels = c("shrub", "C3 grass")),
+    PFT = factor(PFT, levels = c("shrub", "C3 grass")),
     PFT_label = add_letters(PFT, letters = c("b", "c")),
     trmt_lab = pad_labels(trmt_lab) # pad the labels with space
-    ) %>%
-  ggplot(aes(trmt_lab, bio_diff_m, color = trmt_group)) +
-  geom_hline(yintercept = 0, linetype = 2, alpha = 0.7) +
+    )
+
+biomass_ctrl <- df %>% # for horizontal lines
+  filter(warm == "ambient", intensity == "ambient")
+
+
+g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
+  geom_hline(data = biomass_ctrl, aes(yintercept = biomass_m),
+             linetype = 2, alpha = 0.7) +
   geom_point() +
-  geom_errorbar(aes(ymin = bio_diff_m - bio_diff_se,
-                    ymax = bio_diff_m + bio_diff_se)) +
+  geom_errorbar(aes(ymin = biomass_m - biomass_se,
+                    ymax = biomass_m + biomass_se)) +
   lemon::facet_rep_wrap(~PFT_label, ncol = 1, scales = "free_y")+
   theme(strip.text = ggtext::element_markdown(hjust = 0),
         legend.position = "none",
         axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  scale_color_manual(values = cols_group) +
-  labs(y = bio_lab1_change,
+  scale_color_manual(values = c("black", cols_group)) +
+  labs(y = bio_lab0,
        x = "Treatment")
 
-
-jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio.jpeg",
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_alt.jpeg",
      res = 600, height = 4,  width = 5, units = 'in')
 
 gridExtra::grid.arrange(g1, g2,
