@@ -15,13 +15,13 @@ theme_update(strip.background = element_blank())
 
 # functions ---------------------------------------------------------------
 
+trmt_group_levs <- c("intensity manipulation", "warming manipulation",
+                     "intensity & warming manipulation")
+
 create_trmt_labels <- function(df) {
   # remove control, and create unique name for each treatment and treatment
   # group
 
-
-  trmt_group_levs <- c("intensity manipulation", "warming manipulation",
-                       "intensity & warming manipulation")
 
   out <- df %>%
     filter(SoilTreatment == "loam",
@@ -93,6 +93,7 @@ create_trmt_labels_all <- function(df) {
 
 
 cols_group <- c("#377eb8", "#e41a1c", "#984ea3")
+names(cols_group) <- trmt_group_levs
 # base for boxplots
 box_base <- function(outlier.size = 1.5) {
   list(
@@ -212,10 +213,15 @@ df <- bio_pft4%>%
 biomass_ctrl <- df %>% # for horizontal lines
   filter(warm == "ambient", intensity == "ambient")
 
-
 g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
   geom_hline(data = biomass_ctrl, aes(yintercept = biomass_m),
              linetype = 2, alpha = 0.7) +
+  geom_blank(data = tibble(
+    PFT_label = "**(b)** shrub",
+    biomass_m = 699,
+    trmt_lab = factor(levels(df$trmt_lab)[1], levels = levels(df$trmt_lab)),
+    trmt_group = factor("control", levels = levels(df$trmt_group))
+  ))+
   geom_point() +
   geom_errorbar(aes(ymin = biomass_m - biomass_se,
                     ymax = biomass_m + biomass_se)) +
@@ -223,10 +229,13 @@ g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
   theme(strip.text = ggtext::element_markdown(hjust = 0),
         legend.position = "none",
         axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-  scale_color_manual(values = c("black", cols_group)) +
-  labs(y = bio_lab0,
-       x = "Treatment")
+    labs(y = bio_lab0,
+       x = "Treatment") +
+  # so geom_blank works, and keeps factors ordered:
+  scale_x_discrete(drop = FALSE) +
+  scale_color_manual(values = c(control = "black", cols_group))
 
+g2
 jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_alt.jpeg",
      res = 600, height = 4,  width = 5, units = 'in')
 
