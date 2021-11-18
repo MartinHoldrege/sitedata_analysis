@@ -158,17 +158,28 @@ figs
 dev.off()
 
 
-# * just biomass response for pft4-------------------------------------------
+# * just biomass response for pft5-------------------------------------------
 # formerly fig 7 in manuscript, now for appendix
 
 jpeg("figures/biomass/pub_qual/boxplot_pft4.jpeg",
-     res = 600,  height = 6,  width = 3, units = 'in')
+     res = 600,  height = 8,  width = 6, units = 'in')
+
+# combining two seperate df's so have shrub as a category
+# but C3 annual and perennial grasses seperated
 
 df_list$pft4 %>%
-  mutate(PFT_lab = add_letters(PFT)) %>%
+  filter(PFT == "shrub") %>%
+  bind_rows(df_list$pft_prime %>%
+              filter(!PFT %in% c("sagebrush", "other shrub"))) %>%
+  mutate(PFT = factor(PFT,
+                      levels = c("shrub", "a.cool.grass", "p.cool.grass",
+                                 "p.warm.grass", "forb"),
+                      labels = c("shrub", "annual C3 grass", "perennial C3 grass",
+                                 "perennial C4 grass", "forb")),
+    PFT_lab = add_letters(PFT)) %>%
   ggplot(aes(x = trmt_lab, y = bio_diff, fill = trmt_group)) +
   box_base(outlier.size = 0.75) +
-  lemon::facet_rep_wrap(~ PFT_lab, ncol = 1, scales = "free_y") +
+  lemon::facet_rep_wrap(~ PFT_lab, ncol = 2, scales = "free_y") +
   labs(y = bio_lab1_change) +
   theme(legend.text = element_text(size = 10),
         axis.title = element_text(size = 13),
