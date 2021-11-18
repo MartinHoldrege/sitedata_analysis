@@ -145,9 +145,7 @@ g
 dev.off()
 
 
-#* ms -----------------------------------------------------------
-# simplified presentation of transpiration with depth response
-# for figure 2 in ms
+# depth dotplot -----------------------------------------------------------
 
 # depth vs transpiration for grasses and shrubs, 2x intensity, loam soil
 
@@ -157,7 +155,7 @@ jpeg("figures/soil_moisture/pub_qual/TDOT_transp_v_depth.jpg",
      width = 3,
      units = 'in')
 
-lyr_pft_diff_0l %>%
+g <- lyr_pft_diff_0l %>%
   filter(intensity == "2x intensity",
          PFT %in% c("total", "grass", "shrub")) %>%
   group_by(depth, PFT) %>%
@@ -179,6 +177,7 @@ lyr_pft_diff_0l %>%
   scale_color_manual(
     values = c("total" = "black", "grass" = "#5ab4ac", "shrub" = "#d8b365"))
 
+g
 dev.off()
 
 

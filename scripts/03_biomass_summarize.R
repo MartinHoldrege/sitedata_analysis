@@ -2,7 +2,7 @@
 
 # Script start 2/21/21
 
-# Purpose is to summarize biomass data of stepwat runs on 1of 200sites
+# Purpose is to summarize biomass data of stepwat runs at 200sites
 # Use descriptive stats to summarize biomass by plant functional type,
 # soil type, and precipitation intensity and warming treatments
 
@@ -212,7 +212,7 @@ pft4_summary %>%
   select(matches("perc"), everything()) %>%
   print.data.frame()
 
-(69.7 - 37.4)/37.4*100
+(69.7 - 37.4)/37.4*100 # ~percent magnitude difference between 3c warming and 2x intensiyt
 
 
 # * primary PFTs ----------------------------------------------------------
