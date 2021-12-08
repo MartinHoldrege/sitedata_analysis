@@ -265,7 +265,28 @@ df2 <- df %>%
   group_by(PFT, intensity, warm, SoilTreatment, depth_group) %>%
   summarise_at(.vars = c("perc_transp_m", "perc_transp_diff_m"),
                .funs = sum)
-# View(df2)
+
+
+# * depth group t-test ----------------------------------------------------
+# check whether changes in transp from deep soil layers is significant
+# for grasses
+
+# (whether the data underlying df2 above, is significant)
+grass_m_diff <- lyr_pft_diff1 %>%
+  mutate(depth_group = cut_depth(depth)) %>%
+  filter(SoilTreatment == "loam", intensity == "2x intensity",
+         warm == "ambient",
+         PFT == "grass", depth_group == '40-150 cm') %>%
+  mutate(depth_group = cut_depth(depth)) %>%
+  group_by(site) %>%
+  # diff for deep soils for grass--summing differences across depths
+  # in the deep category
+  summarize(TRANSP_diff = sum(TRANSP_diff)) %>%
+  pull(TRANSP_diff)
+
+hist(grass_m_diff)
+t.test(grass_m_diff) # significant difference
+
 # fitting loess curves ----------------------------------------------------
 # Next: look at residuals and regress against seasonality
 
