@@ -12,7 +12,7 @@ library(lubridate)
 library(gridExtra)
 source("scripts/functions.R")
 source("scripts/fig_params.R")
-source("scripts/03_SM_summarize.R")
+source("scripts/03_SM_summarize.R") # creates most of the dataframes used here
 
 # read in files -----------------------------------------------------------
 
@@ -380,6 +380,84 @@ grid.arrange(legend_intensity,
 dev.off()
 
 
+
+# * original values--not differences ----------------------------------------
+# looking at actual values (T, E, and drain) for all treatments (including control)
+# instead of just showing  the difference from the control
+# to be included in an appendix
+
+df <- tot_transp %>%
+  filter(SoilTreatment == "loam", warm == "ambient")
+
+# all panels should have the same range
+range <- range(c(df$TRANSP, df$EVAPTOT, df$drain))
+
+g0 <-  ggplot(df, aes(x = aridity_index, color = intensity)) +
+  scale_color_manual(values = cols_intensity) +
+  theme_classic() +
+  labs(x = NULL) +
+  theme(legend.title = element_blank()) +
+  coord_cartesian(ylim = range)
+
+g <- g0+
+  theme(legend.position = 'none')
+
+# ** tot transpiration ----------------------------------------------------
+
+
+# transpiration
+g_transp0 <- g0 +
+  labs(y = transp_lab0,
+       tag = "(a)") +
+  theme(legend.position = "top") +
+  guides(color = guide_legend(ncol = 2))
+
+g_transp1 <- g_transp0 +
+  geom_point(aes(y = TRANSP), size = psize) +
+  geom_smooth(aes(y = TRANSP), se = FALSE)
+
+# extract legend
+legend_intensity <- ggpubr::get_legend(g_transp1)
+
+
+g_transp <- g_transp1 + theme(legend.position = "none")
+
+g_transp
+
+# ** tot evaporation ----------------------------------------------------------
+
+g_evap <- g +
+  geom_point(aes(y = EVAPTOT), size = psize) +
+  geom_smooth(aes(y = EVAPTOT), se = FALSE) +
+  labs(y = evap_lab0,
+       tag = "(b)")
+
+# ** tot drainage --------------------------------------------------------------
+
+g_drain <- g +
+  geom_point(aes(y = drain), size = psize) +
+  geom_smooth(aes(y = drain), se = FALSE) +
+  labs(y = drain_lab0,
+       x = aridity_lab,
+       tag = "(c)")
+
+
+
+# ** combine figs ---------------------------------------------------------
+
+
+jpeg("figures/soil_moisture/pub_qual/E-T-and-drain_vs_arid_not-diff.jpeg", res = 600,
+     height = 7, width = 6, units = 'in')
+grid.arrange(legend_intensity,
+             g_transp,
+             g_evap,
+             g_drain,
+             layout_matrix = matrix(c(1, 1, 2, 3, 4, NA), ncol = 2,
+                                    byrow = TRUE),
+             heights = c(4, 10, 10))
+dev.off()
+
+
 # ardity vs T by soiltype -------------------------------------------------
 jpeg("figures/soil_moisture/pub_qual/T_vs_arid_by_soil.jpeg", res = 600,
      height = 7, width = 2.5, units = 'in')
@@ -484,18 +562,4 @@ tot_transp_diff_0l %>%
                                 "Transpiration decreased" = "dark red"))
 
 dev.off()
-# tot_transp_diff_0l %>%
-#   ungroup() %>%
-#   mutate(loss = drain_diff + EVAPTOT_diff,
-#          diff = TRANSP_diff - loss) %>%
-#   pull(diff) %>%
-#   hist()
-# ggplot(tot_transp_diff_0l,
-#        aes(TRANSP_diff, EVAPTOT_diff + drain_diff)) +
-#   geom_point() +
-#   geom_abline(slope = -1, intercept = 0)
-#
-# ggplot(tot_transp_diff_0l,
-#        aes(PRECIP_ppt_Mean, TRANSP + EVAPTOT + drain)) +
-#   geom_point() +
-#   geom_abline(slope = 1, intercept = 0)
+
