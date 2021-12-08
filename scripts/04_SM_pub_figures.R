@@ -383,6 +383,7 @@ dev.off()
 
 # * original values--not differences ----------------------------------------
 # looking at actual values (T, E, and drain) for all treatments (including control)
+# versus MAP (showing MAP so both x and y axis are units of cm of water)
 # instead of just showing  the difference from the control
 # to be included in an appendix
 
@@ -392,7 +393,7 @@ df <- tot_transp %>%
 # all panels should have the same range
 range <- range(c(df$TRANSP, df$EVAPTOT, df$drain))
 
-g0 <-  ggplot(df, aes(x = aridity_index, color = intensity)) +
+g0 <-  ggplot(df, aes(x = PRECIP_ppt_Mean, color = intensity)) +
   scale_color_manual(values = cols_intensity) +
   theme_classic() +
   labs(x = NULL) +
@@ -438,7 +439,7 @@ g_drain <- g +
   geom_point(aes(y = drain), size = psize) +
   geom_smooth(aes(y = drain), se = FALSE) +
   labs(y = drain_lab0,
-       x = aridity_lab,
+       x = map_lab,
        tag = "(c)")
 
 
