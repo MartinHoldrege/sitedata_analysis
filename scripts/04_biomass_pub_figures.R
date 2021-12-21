@@ -16,7 +16,7 @@ theme_update(strip.background = element_blank())
 # functions ---------------------------------------------------------------
 
 trmt_group_levs <- c("intensity manipulation", "warming manipulation",
-                     "intensity & warming manipulation")
+                     "intensity & warming")
 
 create_trmt_labels <- function(df) {
   # remove control, and create unique name for each treatment and treatment
@@ -32,7 +32,7 @@ create_trmt_labels <- function(df) {
                                "intensity manipulation",
                                ifelse(intensity == "ambient",
                                       "warming manipulation",
-                                      "intensity & warming manipulation")),
+                                      "intensity & warming")),
            trmt_lab = ifelse(trmt_group == "intensity manipulation",
                              as.character(intensity),
                              ifelse(trmt_group == "warming manipulation",
@@ -109,10 +109,10 @@ box_base <- function(outlier.size = 1.5) {
 }
 
 # base for shrub:grass ratio dotplots
-SGr_base <- function() {
-  list(
+SGr_base <- function(show_vline = TRUE, show_point = TRUE) {
+  out <- list(
     geom_vline(xintercept = ctrl_mean, linetype = 2, alpha = 0.7),
-    geom_point(),
+    "point" = geom_point(),
     geom_errorbar(aes(xmin = SGr - SGr_se, xmax = SGr + SGr_se)),
     scale_color_manual(values = c("control" = "black", cols_group)),
     theme(legend.position = "top",
@@ -123,6 +123,13 @@ SGr_base <- function() {
     labs(y = "Treatment"),
     coord_flip()
   )
+  if(!show_vline) { # remove vert line
+    out[[1]] <- NULL
+  }
+  if(!show_point) {
+    out$point <- NULL
+  }
+  out
 }
 # boxplot--by pft and trmt ------------------------------------------------
 
@@ -193,25 +200,50 @@ dev.off()
 # ratio of shrubs to perennial C3 grasses, this is a 3 panel
 # figure, with first panel being the shrub:c3 dotplot, and the other
 # to being shrub and grass change changes (dotplots)
+# seperately showing arid and mesic sites
+
+
+# for seperately plotting arid and mesic:
+arid_mesic_base <- function() {
+  list(
+    scale_shape_manual(values = c(16, 24)),
+    scale_linetype_manual(values = c(3, 5)),
+    geom_point(aes(shape = aridity_group), size = 1.5,
+               fill = "white") # white fill for empty triangles
+  )
+}
 
 bio_SC3Gr_2 <- create_trmt_labels_all(bio_SC3Gr) %>%
   mutate(label = "**(a)**") # for corner of plot
 
 # for vertical line
-ctrl_mean <- with(bio_SC3Gr_2, mean(SGr[str_detect(trmt_lab, "control")]))
+ctrl_mean <- bio_SC3Gr_2 %>%
+  filter(str_detect(trmt_lab, "control"))
 
 # dotplot of ratios
-g1 <- ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
-  SGr_base() +
+g1 <- ggplot(bio_SC3Gr_2,
+             aes(SGr, trmt_lab, color = trmt_group, group = aridity_group)) +
+  geom_vline(data = ctrl_mean, aes(xintercept = SGr,
+                                   linetype = aridity_group),
+             alpha = 0.7) +
+  SGr_base(show_vline = FALSE, show_point = FALSE) +
+  arid_mesic_base() +
   labs(x = "Shrub:C3 grass") +
   # so that letter "a" shows up:
   facet_wrap(~label) +
-  theme(strip.text = ggtext::element_markdown(hjust = 0))
+  theme(strip.text = ggtext::element_markdown(hjust = 0),
+        legend.margin = margin(c(0, 0, 0, 0)),
+        legend.text = element_text(size=7)) +
+  guides(shape = guide_legend(ncol = 1, reverse = TRUE),
+         linetype = FALSE) # no linetype legend
+g1
 
-# dotplot of differences by treatment for shrubs and C3 perennial grasses
+# dotplot of biomass by treatment for shrubs and C3 perennial grasses
 df <- bio_pft4%>%
   filter(PFT %in% c("shrub", "C3 grass")) %>%
-  group_by(warm, PFT, intensity, SoilTreatment) %>%
+  mutate(aridity_group = ifelse(aridity_index < 0.5, "aridity index < 0.5",
+                                "aridity index > 0.5")) %>%
+  group_by(warm, PFT, intensity, SoilTreatment, aridity_group) %>%
   summarize(biomass_m = mean(biomass),
             biomass_se = plotrix::std.error(biomass)) %>%
   create_trmt_labels_all() %>%
@@ -224,31 +256,37 @@ df <- bio_pft4%>%
 biomass_ctrl <- df %>% # for horizontal lines
   filter(warm == "ambient", intensity == "ambient")
 
-g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
-  geom_hline(data = biomass_ctrl, aes(yintercept = biomass_m),
-             linetype = 2, alpha = 0.7) +
+g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group,
+                       group = aridity_group)) +
+  geom_hline(data = biomass_ctrl,
+             aes(yintercept = biomass_m, linetype = aridity_group),
+             alpha = 0.7) +
+  # to get axes ranges to better
   geom_blank(data = tibble(
-    PFT_label = "**(b)** shrub",
-    biomass_m = 699,
+    PFT_label = c("**(b)** shrub", "**(c)** C3 grass"),
+    biomass_m = c(900, 70),
+    aridity_group = "aridity index < 0.5",
     trmt_lab = factor(levels(df$trmt_lab)[1], levels = levels(df$trmt_lab)),
     trmt_group = factor("control", levels = levels(df$trmt_group))
   ))+
-  geom_point() +
   geom_errorbar(aes(ymin = biomass_m - biomass_se,
                     ymax = biomass_m + biomass_se)) +
+
   lemon::facet_rep_wrap(~PFT_label, ncol = 1, scales = "free_y")+
   theme(strip.text = ggtext::element_markdown(hjust = 0),
         legend.position = "none",
         axis.text.x = element_text(angle = 90, vjust = 0.5)) +
     labs(y = bio_lab0,
        x = "Treatment") +
-  # so geom_blank works, and keeps factors ordered:
+  arid_mesic_base() +
+  # so trmt factor order
   scale_x_discrete(drop = FALSE) +
-  scale_color_manual(values = c(control = "black", cols_group))
+  scale_color_manual(values = c("control" = "black", cols_group))
+
 
 g2
-jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_alt.jpeg",
-     res = 600, height = 4,  width = 5, units = 'in')
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_aridity.jpeg",
+     res = 600, height = 4,  width = 6, units = 'in')
 
 gridExtra::grid.arrange(g1, g2,
                         layout_matrix = rbind(c(1, 2)))

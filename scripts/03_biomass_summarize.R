@@ -115,11 +115,14 @@ bio_SGr_m <- bio_SGr1 %>%
 
 
 # ratio of shrubs to p.cool.grass, for dotplot in manuscript
-# here comparing c3 grasses (excluding cheatgrass) to shrubs (c3)
+# here comparing c3 grasses (excluding cheatgrass) to shrubs (c3).
+# seperately calculated for arid and semi-arid sites, and mesic sites
 bio_SC3Gr <- bio1 %>%
   filter(PFT %in% c("sagebrush", "shrub", "p.cool.grass")) %>%
-  mutate(PFT = ifelse(PFT == "p.cool.grass", "p.cool.grass", "shrub")) %>%
-  group_by(SoilTreatment, intensity, warm, site, PFT) %>%
+  mutate(PFT = ifelse(PFT == "p.cool.grass", "p.cool.grass", "shrub"),
+         aridity_group = ifelse(aridity_index < 0.5, "aridity index < 0.5",
+                                "aridity index > 0.5")) %>%
+  group_by(SoilTreatment, intensity, warm, aridity_group, site,  PFT) %>%
   summarise(biomass = sum(biomass),# summing across shrubs
             # next summarise relies on groups except PFT:
             .groups = "drop_last") %>%
