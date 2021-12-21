@@ -193,6 +193,7 @@ dev.off()
 # ratio of shrubs to perennial C3 grasses, this is a 3 panel
 # figure, with first panel being the shrub:c3 dotplot, and the other
 # to being shrub and grass change changes (dotplots)
+# only showing arid sites
 
 bio_SC3Gr_2 <- create_trmt_labels_all(bio_SC3Gr) %>%
   mutate(label = "**(a)**") # for corner of plot
@@ -210,7 +211,8 @@ g1 <- ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
 
 # dotplot of differences by treatment for shrubs and C3 perennial grasses
 df <- bio_pft4%>%
-  filter(PFT %in% c("shrub", "C3 grass")) %>%
+  filter(PFT %in% c("shrub", "C3 grass"),
+         aridity_index < 0.5) %>%
   group_by(warm, PFT, intensity, SoilTreatment) %>%
   summarize(biomass_m = mean(biomass),
             biomass_se = plotrix::std.error(biomass)) %>%
@@ -228,8 +230,8 @@ g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
   geom_hline(data = biomass_ctrl, aes(yintercept = biomass_m),
              linetype = 2, alpha = 0.7) +
   geom_blank(data = tibble(
-    PFT_label = "**(b)** shrub",
-    biomass_m = 699,
+    PFT_label = c("**(b)** shrub", "**(c)** C3 grass"),
+    biomass_m = c(649, 65),
     trmt_lab = factor(levels(df$trmt_lab)[1], levels = levels(df$trmt_lab)),
     trmt_group = factor("control", levels = levels(df$trmt_group))
   ))+
@@ -247,7 +249,7 @@ g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
   scale_color_manual(values = c(control = "black", cols_group))
 
 g2
-jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_alt.jpeg",
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_arid-only.jpeg",
      res = 600, height = 4,  width = 5, units = 'in')
 
 gridExtra::grid.arrange(g1, g2,
