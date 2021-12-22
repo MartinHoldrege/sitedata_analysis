@@ -116,19 +116,20 @@ bio_SGr_m <- bio_SGr1 %>%
 
 # ratio of shrubs to p.cool.grass, for dotplot in manuscript
 # here comparing c3 grasses (excluding cheatgrass) to shrubs (c3)
+# these are site level mean values
 bio_SC3Gr <- bio1 %>%
   filter(PFT %in% c("sagebrush", "shrub", "p.cool.grass")) %>%
   mutate(PFT = ifelse(PFT == "p.cool.grass", "p.cool.grass", "shrub")) %>%
-  group_by(SoilTreatment, intensity, warm, site, PFT) %>%
+  # including aridity index for later use
+  group_by(SoilTreatment, intensity, aridity_index, warm, site, PFT) %>%
   summarise(biomass = sum(biomass),# summing across shrubs
             # next summarise relies on groups except PFT:
             .groups = "drop_last") %>%
   summarize(SGr = biomass[PFT == "shrub"]/biomass[PFT == "p.cool.grass"],
             .groups = "drop_last") %>% # collapsing to plot level
-  filter(is.finite(SGr)) %>% # if 0 grass the ratio is undefined
-  summarize(SGr_se = plotrix::std.error(SGr), # across plots
-            SGr = mean(SGr),
-            .groups = "drop")
+  filter(is.finite(SGr)) # %>% # if 0 grass the ratio is undefined
+
+
 
 # ratio of shrubs to p.warm.grass, for appendix
 # here comparing c4 grasses  to shrubs.

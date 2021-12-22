@@ -108,6 +108,30 @@ box_base <- function(outlier.size = 1.5) {
   )
 }
 
+# for boxplot showing actual data points colored
+box_base2 <- function() {
+  list(
+    geom_jitter(aes(color = arid_group), height = 0.2, alpha = 0.3,
+                size = 0.5),
+    geom_boxplot(outlier.color = NA, fill = NA),
+    stat_summary(
+      geom = "point",
+      fun = "mean",
+      col = "black",
+      size = 1,
+      fill = "black"
+    ),
+    coord_flip(),
+    # so that letter "a" etc shows up:
+    facet_wrap(~label),
+    theme(strip.text = ggtext::element_markdown(hjust = 0)),
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5)),
+    scale_color_manual(
+      values = RColorBrewer::brewer.pal(11, "RdYlBu")[c(2:7, 9)]),
+    labs(y = "Treatment")
+  )
+}
+
 # base for shrub:grass ratio dotplots
 SGr_base <- function() {
   list(
@@ -192,62 +216,60 @@ dev.off()
 # * shrub to c3 -----------------------------------------------------------
 # ratio of shrubs to perennial C3 grasses, this is a 3 panel
 # figure, with first panel being the shrub:c3 dotplot, and the other
-# to being shrub and grass change changes (dotplots)
+# to being shrub and grass change changes now showing this as boxplots
+# with actual points showing as well
 
 bio_SC3Gr_2 <- create_trmt_labels_all(bio_SC3Gr) %>%
-  mutate(label = "**(a)**") # for corner of plot
+  mutate(label = "**(a)**",
+         # so can color by aridity group as in map
+         arid_group = cut(aridity_index,
+                          breaks = c(0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 10)))
 
 # for vertical line
 ctrl_mean <- with(bio_SC3Gr_2, mean(SGr[str_detect(trmt_lab, "control")]))
 
 # dotplot of ratios
-g1 <- ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
-  SGr_base() +
-  labs(x = "Shrub:C3 grass") +
-  # so that letter "a" shows up:
-  facet_wrap(~label) +
-  theme(strip.text = ggtext::element_markdown(hjust = 0))
 
-# dotplot of differences by treatment for shrubs and C3 perennial grasses
+g1 <- ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab)) +
+  geom_vline(xintercept = ctrl_mean,
+             linetype = 2, alpha = 0.7) +
+  box_base2() +
+  labs(x = "Shrub:C3 grass") +
+
+  theme(legend.position = "top",
+        legend.title = element_blank(),
+        legend.text = element_text(size = 8))
+g1
+
+# boxplot of differences by treatment for shrubs and C3 perennial grasses
 df <- bio_pft4%>%
-  filter(PFT %in% c("shrub", "C3 grass")) %>%
-  group_by(warm, PFT, intensity, SoilTreatment) %>%
-  summarize(biomass_m = mean(biomass),
-            biomass_se = plotrix::std.error(biomass)) %>%
+  filter(PFT %in% c("shrub", "C3 grass"),
+         # only show sites with some biomass
+         biomass > 0) %>%
+  mutate(arid_group = cut(aridity_index,
+                          breaks = c(0, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 10))) %>%
   create_trmt_labels_all() %>%
   mutate(
     PFT = factor(PFT, levels = c("shrub", "C3 grass")),
-    PFT_label = add_letters(PFT, letters = c("b", "c")),
+    label = add_letters(PFT, letters = c("b", "c")),
     trmt_lab = pad_labels(trmt_lab) # pad the labels with space
     )
 
 biomass_ctrl <- df %>% # for horizontal lines
-  filter(warm == "ambient", intensity == "ambient")
+  filter(warm == "ambient", intensity == "ambient") %>%
+  group_by(warm, PFT, intensity, SoilTreatment, label) %>%
+  summarize(biomass = mean(biomass))
 
-g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
-  geom_hline(data = biomass_ctrl, aes(yintercept = biomass_m),
+g2 <- ggplot(df, aes(biomass, trmt_lab)) +
+  geom_vline(data = biomass_ctrl, aes(xintercept = biomass),
              linetype = 2, alpha = 0.7) +
-  geom_blank(data = tibble(
-    PFT_label = "**(b)** shrub",
-    biomass_m = 699,
-    trmt_lab = factor(levels(df$trmt_lab)[1], levels = levels(df$trmt_lab)),
-    trmt_group = factor("control", levels = levels(df$trmt_group))
-  ))+
-  geom_point() +
-  geom_errorbar(aes(ymin = biomass_m - biomass_se,
-                    ymax = biomass_m + biomass_se)) +
-  lemon::facet_rep_wrap(~PFT_label, ncol = 1, scales = "free_y")+
-  theme(strip.text = ggtext::element_markdown(hjust = 0),
-        legend.position = "none",
-        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-    labs(y = bio_lab0,
-       x = "Treatment") +
-  # so geom_blank works, and keeps factors ordered:
-  scale_x_discrete(drop = FALSE) +
-  scale_color_manual(values = c(control = "black", cols_group))
+  box_base2()+
+  lemon::facet_rep_wrap(~label, ncol = 1, scales = "free_y") +
+  theme(legend.position = "none") +
+  labs(x = bio_lab0)
 
 g2
-jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_alt.jpeg",
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_points.jpeg",
      res = 600, height = 4,  width = 5, units = 'in')
 
 gridExtra::grid.arrange(g1, g2,
