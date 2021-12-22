@@ -486,8 +486,7 @@ tot_transp_pft_diff2 <- tot_transp_pft_diff %>%
   filter(SoilTreatment == "loam",
          warm == "ambient",
          PFT != "total") %>%
-  mutate(PFT = factor(PFT, levels = c("shrub", "grass", "forbs"),
-                      labels = c("shrub", "grass", "forb")),
+  mutate(PFT = sgf2factor(PFT),
          PFT_lab = add_letters(PFT)) %>%
   ungroup()
 
@@ -542,6 +541,34 @@ g0 +
   geom_smooth(aes(x = PRECIP_ppt_Mean,y = TRANSP_diff), se = FALSE) +
   labs(x = map_lab)
 
+dev.off()
+
+
+# * original values--not diff ---------------------------------------------
+# looking at transp for each PFT and treatment, not diff from control
+# for appendix.
+
+g <- tot_transp_pft %>%
+  filter(warm == "ambient", SoilTreatment == "loam",
+         PFT != "total") %>%
+  mutate(PFT = sgf2factor(PFT),
+         PFT_lab = add_letters(PFT)) %>%
+  ggplot(aes(x = aridity_index, y = TRANSP, color = intensity)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  scale_color_manual(values = cols_intensity) +
+  labs(y =  transp_lab0,
+       x = aridity_lab) +
+  theme(legend.title = element_blank(),
+        legend.position = "top",
+        # allows text to render as markdown
+        strip.text = ggtext::element_markdown(hjust = 0)) +
+  lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 2) +
+  guides(color = guide_legend(ncol = 2))
+
+jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid_not-diff.jpeg", res = 600,
+     height = 7, width = 6, units = 'in')
+g
 dev.off()
 
 # drain vs evap -----------------------------------------------------------

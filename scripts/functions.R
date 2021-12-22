@@ -340,6 +340,15 @@ trmts2factors <- function(df) {
 }
 
 
+# sgf2factor --------------------------------------------------------------
+
+# convert shrubs, grasses, and forbs to an ordered factor
+
+sgf2factor <- function(x) {
+  factor(x, levels = c("shrub", "grass", "forbs"),
+         labels = c("shrub", "grass", "forb"))
+}
+
 # mutate_pft_cols ---------------------------------------------------------
 
 # parsing PFT based columns when converting to long form in
