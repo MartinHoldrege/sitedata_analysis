@@ -432,6 +432,34 @@ g +
 dev.off()
 
 
+# * pft4 (total) vs aridity ---------------------------------------------
+# looking at total biomass for each intensity trmt, not diff from control.
+
+g <- bio_pft4 %>%
+  filter(warm == "ambient", SoilTreatment == "loam",
+         # only including c4 grass sites when they have biomass
+         # under control conditions (so is comparable to diffs from ctrl, where
+         # that criterion was used)
+         !(PFT == "C4 grass" & !site %in% c4_sites)) %>%
+  mutate(PFT_lab = add_letters(PFT)) %>%
+  ggplot(aes(x = aridity_index, y = biomass, color = intensity)) +
+  geom_point() +
+  geom_smooth(se = FALSE) +
+  scale_color_manual(values = cols_intensity) +
+  labs(y =  bio_lab0,
+       x = aridity_lab) +
+  theme(legend.title = element_blank(),
+        legend.position = "top",
+        # allows text to render as markdown
+        strip.text = ggtext::element_markdown(hjust = 0)) +
+  lemon::facet_rep_wrap(~PFT_lab, scales = "free_y", ncol = 2) +
+  guides(color = guide_legend(ncol = 2))
+
+jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4_not-diff.jpeg", res = 600,
+     height = 7, width = 6, units = 'in')
+g
+dev.off()
+
 # pft4 vs aridity by soiltype ---------------------------------------------
 # biomass vs aridity by soil type. each of 4 pfts and intensity levels
 # in seperate panels
