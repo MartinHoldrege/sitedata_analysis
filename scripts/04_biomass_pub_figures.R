@@ -111,7 +111,9 @@ box_base <- function(outlier.size = 1.5) {
 # base for shrub:grass ratio dotplots
 SGr_base <- function() {
   list(
-    geom_vline(xintercept = ctrl_mean, linetype = 2, alpha = 0.7),
+    geom_vline(aes(
+      xintercept = mean(SGr[str_detect(trmt_lab, "control")])),
+      linetype = 2, alpha = 0.7),
     geom_point(),
     geom_errorbar(aes(xmin = SGr - SGr_se, xmax = SGr + SGr_se)),
     scale_color_manual(values = c("control" = "black", cols_group)),
@@ -122,6 +124,30 @@ SGr_base <- function() {
     guides(color = guide_legend(ncol = 1)),
     labs(y = "Treatment"),
     coord_flip()
+  )
+}
+
+# dotplot of actual biomass (base) (part of fig 7):
+bio_dot_base <- function() {
+  list(
+    # so only show dotted line for control plot (doing this
+    # so shows lines for each panel)
+    geom_hline(aes(yintercept = ifelse(str_detect(trmt_lab, "control"),
+                                       biomass_m,
+                                       NA_real_)),
+               linetype = 2, alpha = 0.7),
+    geom_point(),
+    geom_errorbar(aes(ymin = biomass_m - biomass_se,
+                      ymax = biomass_m + biomass_se)),
+    lemon::facet_rep_wrap(~PFT_label, ncol = 1, scales = "free_y"),
+    theme(strip.text = ggtext::element_markdown(hjust = 0),
+          legend.position = "none",
+          axis.text.x = element_text(angle = 90, vjust = 0.5)),
+    labs(y = bio_lab0,
+         x = "Treatment"),
+    # so geom_blank works, and keeps factors ordered:
+    scale_x_discrete(drop = FALSE),
+    scale_color_manual(values = c(control = "black", cols_group))
   )
 }
 # boxplot--by pft and trmt ------------------------------------------------
@@ -193,27 +219,16 @@ dev.off()
 # ratio of shrubs to perennial C3 grasses, this is a 3 panel
 # figure, with first panel being the shrub:c3 dotplot, and the other
 # to being shrub and grass change changes (dotplots)
-# only showing arid sites
 
+# for ratio panel
 bio_SC3Gr_2 <- create_trmt_labels_all(bio_SC3Gr) %>%
   mutate(label = "**(a)**") # for corner of plot
 
-# for vertical line
-ctrl_mean <- with(bio_SC3Gr_2, mean(SGr[str_detect(trmt_lab, "control")]))
-
-# dotplot of ratios
-g1 <- ggplot(bio_SC3Gr_2, aes(SGr, trmt_lab, color = trmt_group)) +
-  SGr_base() +
-  labs(x = "Shrub:C3 grass") +
-  # so that letter "a" shows up:
-  facet_wrap(~label) +
-  theme(strip.text = ggtext::element_markdown(hjust = 0))
-
-# dotplot of differences by treatment for shrubs and C3 perennial grasses
+# for total biomass panels
 df <- bio_pft4%>%
-  filter(PFT %in% c("shrub", "C3 grass"),
-         aridity_index < 0.5) %>%
-  group_by(warm, PFT, intensity, SoilTreatment) %>%
+  filter(PFT %in% c("shrub", "C3 grass")) %>%
+  mutate(aridity_group = arid2levels(aridity_index)) %>%
+  group_by(warm, PFT, intensity, SoilTreatment, aridity_group) %>%
   summarize(biomass_m = mean(biomass),
             biomass_se = plotrix::std.error(biomass)) %>%
   create_trmt_labels_all() %>%
@@ -221,34 +236,39 @@ df <- bio_pft4%>%
     PFT = factor(PFT, levels = c("shrub", "C3 grass")),
     PFT_label = add_letters(PFT, letters = c("b", "c")),
     trmt_lab = pad_labels(trmt_lab) # pad the labels with space
-    )
+  )
 
-biomass_ctrl <- df %>% # for horizontal lines
-  filter(warm == "ambient", intensity == "ambient")
+# ** arid only ------------------------------------------------------------
+# arid sites
 
-g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group)) +
-  geom_hline(data = biomass_ctrl, aes(yintercept = biomass_m),
-             linetype = 2, alpha = 0.7) +
+# dotplot of ratios of biomass
+g1 <- bio_SC3Gr_2 %>%
+  # filtering this way so that selecting first level of factor, even
+  # if the name of that factor level changes
+  filter(as.numeric(aridity_group) == 1) %>%
+  ggplot(aes(SGr, trmt_lab, color = trmt_group)) +
+  SGr_base() +
+  labs(x = "Shrub:C3 grass") +
+  # so that letter "a" shows up:
+  facet_wrap(~label) +
+  theme(strip.text = ggtext::element_markdown(hjust = 0))
+
+
+# dotplot of total biomass
+g2 <- df %>%
+  # filterin this way so that selecting first level of factor, even
+  # if the name of that factor level changes
+  filter(as.numeric(aridity_group) == 1) %>%
+  ggplot(aes(trmt_lab, biomass_m, color = trmt_group)) +
   geom_blank(data = tibble(
     PFT_label = c("**(b)** shrub", "**(c)** C3 grass"),
     biomass_m = c(649, 65),
     trmt_lab = factor(levels(df$trmt_lab)[1], levels = levels(df$trmt_lab)),
     trmt_group = factor("control", levels = levels(df$trmt_group))
-  ))+
-  geom_point() +
-  geom_errorbar(aes(ymin = biomass_m - biomass_se,
-                    ymax = biomass_m + biomass_se)) +
-  lemon::facet_rep_wrap(~PFT_label, ncol = 1, scales = "free_y")+
-  theme(strip.text = ggtext::element_markdown(hjust = 0),
-        legend.position = "none",
-        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
-    labs(y = bio_lab0,
-       x = "Treatment") +
-  # so geom_blank works, and keeps factors ordered:
-  scale_x_discrete(drop = FALSE) +
-  scale_color_manual(values = c(control = "black", cols_group))
+  )) +
+  bio_dot_base()
 
-g2
+
 jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_arid-only.jpeg",
      res = 600, height = 4,  width = 5, units = 'in')
 
@@ -258,13 +278,42 @@ gridExtra::grid.arrange(g1, g2,
 dev.off()
 
 
+# ** mesic only -----------------------------------------------------------
+
+# arid sites
+
+# dotplot of ratios of biomass
+g1 <- bio_SC3Gr_2 %>%
+  filter(as.numeric(aridity_group) == 2) %>%
+  ggplot(aes(SGr, trmt_lab, color = trmt_group)) +
+  SGr_base() +
+  labs(x = "Shrub:C3 grass") +
+  # so that letter "a" shows up:
+  facet_wrap(~label) +
+  theme(strip.text = ggtext::element_markdown(hjust = 0))
+
+
+# dotplot of total biomass
+g2 <- df %>%
+  filter(as.numeric(aridity_group) == 2) %>%
+  ggplot(aes(trmt_lab, biomass_m, color = trmt_group)) +
+  bio_dot_base()
+
+
+
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_mesic-only.jpeg",
+     res = 600, height = 4,  width = 5, units = 'in')
+
+gridExtra::grid.arrange(g1, g2,
+                        layout_matrix = rbind(c(1, 2)))
+
+dev.off()
+
 # * shrub: total grass ----------------------------------------------------
 # ratio of shrubs to all grasses
 
 bio_SGr_2 <- create_trmt_labels_all(bio_SGr_m)
 
-# for vertical line
-ctrl_mean <- with(bio_SGr_2, mean(SGr[str_detect(trmt_lab, "control")]))
 
 jpeg("figures/biomass/pub_qual/BDOT_shrub-total-grass-ratio.jpeg",
      res = 600, height = 4,  width = 3, units = 'in')
@@ -283,9 +332,6 @@ dev.off()
 
 bio_SC4Gr_2 <- create_trmt_labels_all(bio_SC4Gr)
 
-# for vertical line
-ctrl_mean <- with(bio_SC4Gr_2, mean(SGr[str_detect(trmt_lab, "control")]))
-
 jpeg("figures/biomass/pub_qual/BDOT_shrub-C4-grass-ratio.jpeg",
      res = 600, height = 4,  width = 3, units = 'in')
 
@@ -303,13 +349,14 @@ jpeg("figures/biomass/pub_qual/BIOARID_bio_vs_aridity.jpeg",
      res = 600,  height = 5,  width = 5, units = 'in')
 
 df_list$pft4 %>%
-  filter(trmt_lab %in% c("2x", "3C", "2x/3C")) %>%
+  # using regex for filter b/ white space used to pad labels
+  filter(str_detect(trmt_lab, "^ *(2x|3C|2x/3C) *$")) %>%
   ggplot(aes(x = aridity_index, y = bio_diff, color = trmt_lab)) +
   geom_hline(yintercept = 0, linetype = 2, alpha = 0.7) +
   geom_point(size = 0.5) +
   geom_smooth(se = FALSE) +
   lemon::facet_rep_grid(PFT ~ trmt_lab, scales = "free_y") +
-  scale_color_manual(values = cols_group) +
+  scale_color_manual(values = unname(cols_group)) +
   labs(x = aridity_lab,
        y = bio_lab1) +
   theme(legend.position = "none")

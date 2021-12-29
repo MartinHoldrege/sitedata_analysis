@@ -349,6 +349,20 @@ sgf2factor <- function(x) {
          labels = c("shrub", "grass", "forb"))
 }
 
+
+# split aridity -----------------------------------------------------------
+
+# function to create a factor that groups aridity into two levels
+arid2levels <- function(x, cut_point = 0.59) {
+  # x--aridity index
+  # cut_point--point to split aridity
+  low <- paste("aridity <", cut_point)
+  high <- paste("aridity >", cut_point)
+  out <- ifelse(x < cut_point, low, high)
+  out <- factor(out, levels = c(low, high))
+  out
+}
+
 # mutate_pft_cols ---------------------------------------------------------
 
 # parsing PFT based columns when converting to long form in

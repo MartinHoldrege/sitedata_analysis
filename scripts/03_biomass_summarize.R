@@ -119,10 +119,11 @@ bio_SGr_m <- bio_SGr1 %>%
 
 # for now only including arid and semi-arid sites
 bio_SC3Gr <- bio1 %>%
-  filter(PFT %in% c("sagebrush", "shrub", "p.cool.grass"),
-         aridity_index < 0.5) %>%
-  mutate(PFT = ifelse(PFT == "p.cool.grass", "p.cool.grass", "shrub")) %>%
-  group_by(SoilTreatment, intensity, warm, site, PFT) %>%
+  filter(PFT %in% c("sagebrush", "shrub", "p.cool.grass")) %>%
+  mutate(PFT = ifelse(PFT == "p.cool.grass", "p.cool.grass", "shrub"),
+         # see arid2levels function for default cut_point being used
+         aridity_group = arid2levels(aridity_index)) %>%
+  group_by(SoilTreatment, intensity, aridity_group, warm, site, PFT) %>%
   summarise(biomass = sum(biomass),# summing across shrubs
             # next summarise relies on groups except PFT:
             .groups = "drop_last") %>%
@@ -198,16 +199,19 @@ bio_pft3_diff <- bio1 %>%
 # percent positive
 perc_pos <- function(x) sum(x > 0)/length(x)*100
 
-pft4_summary <- bio_pft4_diff %>%
+bio_pft4_diff0 <- bio_pft4_diff %>%
   filter(SoilTreatment == "loam") %>%
   group_by(intensity, warm, PFT) %>%
   # because c4 grasses sometimes when from 0 biomass to some biomass
   # there are many infinite % changes
   mutate(bio_perc_diff = ifelse(is.infinite(bio_perc_diff),
-                                NA, bio_perc_diff)) %>%
+                                NA, bio_perc_diff))
+
+pft4_summary <- bio_pft4_diff0 %>%
   summarize_at(.vars = c("bio_diff", "bio_perc_diff"),
                .funs = list(~mean(., na.rm = TRUE), lwr = q1, upr = q2,
                             pos = perc_pos))
+
 pft4_summary %>%
   filter(warm == "ambient", intensity == "2x intensity")
 pft4_summary %>%
@@ -237,7 +241,7 @@ prime_pft_smry %>%
 
 
 # * bio by PFT --------------------------------------------------
-# dataframe includes both total transp and transp by pft
+# dataframe based on biomass by pft
 
 arid_range <- range(aridity1$aridity_index)
 
