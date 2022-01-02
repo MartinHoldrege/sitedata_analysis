@@ -207,19 +207,37 @@ bio_pft4_diff0 <- bio_pft4_diff %>%
   mutate(bio_perc_diff = ifelse(is.infinite(bio_perc_diff),
                                 NA, bio_perc_diff))
 
+# all sites
 pft4_summary <- bio_pft4_diff0 %>%
   summarize_at(.vars = c("bio_diff", "bio_perc_diff"),
                .funs = list(~mean(., na.rm = TRUE), lwr = q1, upr = q2,
                             pos = perc_pos))
 
+# sites split into mesic and arid
+pft4_summary2 <- bio_pft4_diff0 %>%
+  mutate(aridity_group = arid2levels(aridity_index)) %>%
+  group_by(aridity_group, .add = TRUE) %>%
+  summarize_at(.vars = c("bio_diff", "bio_perc_diff"),
+               .funs = list(~mean(., na.rm = TRUE), lwr = q1, upr = q2,
+                            pos = perc_pos, n = length)) %>%
+  select(-bio_perc_diff_n)
+
 pft4_summary %>%
   filter(warm == "ambient", intensity == "2x intensity")
+
 pft4_summary %>%
   filter(warm %in% c("3C warming", "5C warming")) %>%
   select(matches("perc"), everything()) %>%
   print.data.frame()
 
 (69.7 - 37.4)/37.4*100 # ~percent magnitude difference between 3c warming and 2x intensiyt
+
+pft4_summary2 %>%
+  filter((intensity == "2x intensity" & warm %in% c("ambient", "3C warming")) |
+           (intensity == "ambient" & warm == "3C warming")) %>%
+  select(matches("perc"), everything()) %>%
+  arrange(PFT, aridity_group, warm, intensity) %>%
+  print.data.frame()
 
 
 # * primary PFTs ----------------------------------------------------------

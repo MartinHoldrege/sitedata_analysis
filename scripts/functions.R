@@ -353,9 +353,10 @@ sgf2factor <- function(x) {
 # split aridity -----------------------------------------------------------
 
 # function to create a factor that groups aridity into two levels
-arid2levels <- function(x, cut_point = 0.59) {
+arid2levels <- function(x, cut_point = 0.54) {
   # x--aridity index
-  # cut_point--point to split aridity
+  # cut_point--point to split aridity (0.54 is the transpiration transition
+  # point)
   low <- paste("aridity <", cut_point)
   high <- paste("aridity >", cut_point)
   out <- ifelse(x < cut_point, low, high)
