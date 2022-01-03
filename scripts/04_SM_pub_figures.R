@@ -174,8 +174,7 @@ g <- lyr_pft_diff_0l %>%
        y = "Transpiration change (cm)") +
   theme(legend.position = "top",
         legend.title = element_blank()) +
-  scale_color_manual(
-    values = c("total" = "black", "grass" = "#5ab4ac", "shrub" = "#d8b365"))
+  scale_color_manual(values = cols_pft3)
 
 g
 dev.off()
@@ -592,3 +591,50 @@ tot_transp_diff_0l %>%
 
 dev.off()
 
+# Root profile ------------------------------------------------------------
+# create figure of rooting profile
+
+
+# * read in data ------------------------------------------------------------
+
+# rSFSTEP2 file  that includes transpiration proportion by functional type
+# as was used for my standard runs (i.e. mh_develop branch)
+git_path <- "https://raw.githubusercontent.com/MartinHoldrege/rSFSTEP2/mh_develop/inputs/InputData_SoilLayers.csv"
+
+sw_slyrs <- read_csv(git_path)
+
+
+# * parse -----------------------------------------------------------------
+
+# long form version of root profile in STEPWAT2
+slyrs_long <- sw_slyrs %>%
+  filter(soil_treatment == "loam") %>%
+  select(depth, matches("trco")) %>%
+  pivot_longer(cols = -depth,
+               names_to = "pft",
+               values_to = "roots") %>%
+  mutate(pft = str_replace(pft, "trco_", "")) %>%
+  filter(pft != "tree")
+
+
+# * figure ----------------------------------------------------------------
+
+jpeg("figures/root_profile_rSFSTEP2.jpg",
+     res = 800,
+     height = 3,
+     width = 3,
+     units = 'in')
+
+ggplot(slyrs_long, aes(x = -depth, y = roots, color = pft)) +
+  geom_line()  +
+  coord_flip()+
+  labs(x = depth_lab,
+       y = "Proportion roots") +
+  scale_color_manual(values = cols_pft3) +
+  scale_x_continuous(breaks = c(breaks, -150),
+                     labels = c(break_labels, 150),
+                     limits = c(-150, 0)) +
+  theme(legend.title = element_blank(),
+        legend.position = "top")
+
+dev.off()

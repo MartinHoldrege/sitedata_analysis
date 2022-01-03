@@ -29,7 +29,11 @@ cols_warm <- c("ambient" = "black",
                "3C warming" = "#fdcc8a",
                "5C warming" = "#d7301f")
 
-
+# PFT3
+cols_pft3 <- c("total" = "black",
+               "grass" = "#5ab4ac",
+               "shrub" = "#d8b365",
+               "forb" = "#bebada")
 # axis labels -------------------------------------------------------------
 
 # transp

@@ -7,6 +7,8 @@
 
 # Within PFTs should then take weighted averages based on abundances from andrew
 
+# root profile figure based on STEPWAT2 data now also created in
+# 04_SM_pub_figures.R
 
 # dependencies ------------------------------------------------------------
 

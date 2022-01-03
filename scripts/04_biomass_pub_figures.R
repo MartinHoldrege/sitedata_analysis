@@ -528,3 +528,6 @@ bio_pft4_diff %>%
   geom_smooth(aes(x = aridity_index), se = FALSE) +
   labs(x = aridity_lab)
 dev.off()
+
+
+
