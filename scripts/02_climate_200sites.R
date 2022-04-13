@@ -99,6 +99,8 @@ aridity1 %>%
   summarize(across(.cols = c("TEMP_avg_C_Mean", "PRECIP_ppt_Mean"),
                    .fns = list(min = min, max = max)))
 
+# number of sites below transition point we present in the manuscript
+sum(aridity1$aridity_index < 0.54)
 # figures -----------------------------------------------------------------
 
 vline_df <- tibble(
