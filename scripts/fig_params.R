@@ -14,10 +14,11 @@ cols_text <- c("sand" = "#e41a1c",
                "loam" = "black")
 
 # colors for precipitation intensity
+# these are colors from the 9-class YlOrRd colorbrewer2 palette
 cols_intensity <- c("ambient" = "black",
-                    "1.25x intensity" = "#fdcc8a",
-                    "1.5x intensity" = "#fc8d59",
-                    "2x intensity" = "#d7301f")
+                    "1.25x intensity" = "#fed976",
+                    "1.5x intensity" = "#fc4e2a",
+                    "2x intensity" = "#7f0000")
 
 # aridity
 cols_aridity <- c("aridity < 0.3" = "#d53e4f",

@@ -4,6 +4,7 @@
 
 # Purpose--to make publication quality figures of soil moisture data
 
+# NEXT--update alpha on geom_points
 
 # dependencies ------------------------------------------------------------
 
@@ -51,6 +52,7 @@ theme_update(strip.background = element_blank(),
              # increasing right margin so numbers not cutoff
              plot.margin = unit(c(5.5, 10, 5.5, 5.5), "points"))
 
+alpha <-  0.5 # transparency for geom_point()
 # depth boxplot ---------------------------------------------------------
 # transpiration vs depth by intensity treatment
 
@@ -148,7 +150,7 @@ dev.off()
 # depth dotplot -----------------------------------------------------------
 
 # depth vs transpiration for grasses and shrubs, 2x intensity, loam soil
-
+# this creates Figure 2 in the manuscript
 jpeg("figures/soil_moisture/pub_qual/TDOT_transp_v_depth.jpg",
      res = 800,
      height = 3,
@@ -232,12 +234,12 @@ w_line <- p_all +
 
 w_line
 
-
 # * combine figures -------------------------------------------------------
 
 lay = rbind(c(1, 1),
             c(2, 3))
 # line only
+# this creates Figure 3 in the manuscript
 jpeg("figures/soil_moisture/pub_qual/TDOY_line.jpeg", res = 600,
      height = 4, width = 4, units = 'in')
 grid.arrange(
@@ -278,7 +280,8 @@ g_transp0 <- g +
   guides(color = guide_legend(ncol = 1))
 
 g_transp1 <- g_transp0 +
-  geom_point(aes(x = aridity_index, y = TRANSP_diff), size = psize) +
+  geom_point(aes(x = aridity_index, y = TRANSP_diff),
+             size = psize, alpha = alpha) +
   geom_smooth(aes(x = aridity_index, y = TRANSP_diff), se = FALSE)
 
 # extract legetnds
@@ -297,7 +300,8 @@ g_evap0 <- g2 +
        tag = "(b)")
 
 g_evap <- g_evap0 +
-  geom_point(aes(x = aridity_index, y = EVAPTOT_diff), size = psize) +
+  geom_point(aes(x = aridity_index, y = EVAPTOT_diff), alpha = alpha,
+             size = psize) +
   geom_smooth(aes(x = aridity_index, y = EVAPTOT_diff), se = FALSE)
 g_evap
 
@@ -307,7 +311,8 @@ g_drain0 <- g2 +
        tag = "(c)")
 
 g_drain <- g_drain0 +
-  geom_point(aes(x = aridity_index, y = drain_diff), size = psize) +
+  geom_point(aes(x = aridity_index, y = drain_diff), alpha = alpha,
+             size = psize) +
   geom_smooth(aes(x = aridity_index, y = drain_diff), se = FALSE) +
   labs(x = aridity_lab)
 
@@ -315,7 +320,7 @@ g_drain
 
 # combine figures
 
-
+# this creates Figure 4 in the manuscript
 jpeg("figures/soil_moisture/pub_qual/ETDRAIN_E-T-and-drain_vs_arid.jpeg", res = 600,
      height = 7, width = 2.5, units = 'in')
 grid.arrange(legend_intensity,
@@ -499,6 +504,7 @@ limit_df <- tot_transp_pft_diff2 %>%
 
 
 # 3 panels, transpiration for shrubs, grasses and forbs
+# this creates Figure 5 in the manuscript
 jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
      height = 7, width = 2.5, units = 'in')
 g0 <- ggplot(tot_transp_pft_diff2,
@@ -516,7 +522,7 @@ g0 <- ggplot(tot_transp_pft_diff2,
 
 g <- g0 +
   geom_blank(data = limit_df, aes(y = TRANSP_diff))+
-  geom_point(aes(y = TRANSP_diff), size = 0.5) +
+  geom_point(aes(y = TRANSP_diff), size = 0.5, alpha = alpha) +
   geom_smooth(aes(y = TRANSP_diff), se = FALSE) +
   labs(x = aridity_lab)
 g
@@ -632,7 +638,7 @@ ggplot(slyrs_long, aes(x = -depth, y = roots, color = pft)) +
        y = "Proportion roots") +
   scale_color_manual(values = cols_pft3) +
   scale_x_continuous(breaks = c(breaks, -150),
-                     labels = c(break_labels, 150),
+                     labels = c(as.character(-breaks), 150),
                      limits = c(-150, 0)) +
   theme(legend.title = element_blank(),
         legend.position = "top")

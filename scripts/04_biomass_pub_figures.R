@@ -12,7 +12,7 @@ theme_set(theme_classic())
 
 theme_update(strip.background = element_blank())
 
-
+alpha <-  0.5 # transparency for geom_point()
 # functions ---------------------------------------------------------------
 
 trmt_group_levs <- c("intensity manipulation", "warming manipulation",
@@ -403,6 +403,8 @@ bio_pft4_diff_0l <- bio_pft4_diff %>%
          SoilTreatment == "loam") %>%
   mutate(PFT_lab = add_letters(PFT))
 
+
+# creates figure 6 in manuscript
 jpeg("figures/biomass/pub_qual/BIOPFTARID_pft4.jpeg", res = 600,
      height = 4, width = 4, units = 'in')
 
@@ -432,7 +434,7 @@ g <- ggplot(bio_pft4_diff_0l,
   scale_y_continuous(breaks = breaks_fun)
 
 g +
-  geom_point(aes(x = aridity_index), size = 0.5) +
+  geom_point(aes(x = aridity_index), size = 0.5, alpha = alpha) +
   geom_smooth(aes(x = aridity_index), se = FALSE) +
   labs(x = aridity_lab) +
   # so herbaceous plants all have the same limits
