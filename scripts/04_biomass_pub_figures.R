@@ -109,12 +109,11 @@ box_base <- function(outlier.size = 1.5) {
 }
 
 # base for shrub:grass ratio dotplots
-SGr_base <- function() {
-  list(
-    geom_vline(aes(
-      xintercept = mean(SGr[str_detect(trmt_lab, "control")])),
-      linetype = 2, alpha = 0.7),
-    geom_point(),
+SGr_base <- function(show_vline = TRUE, show_point = TRUE) {
+  out <- list(
+    geom_vline(aes(xintercept = mean(SGr[str_detect(trmt_lab, "control")])),
+               linetype = 2, alpha = 0.7),
+    "point" = geom_point(),
     geom_errorbar(aes(xmin = SGr - SGr_se, xmax = SGr + SGr_se)),
     scale_color_manual(values = c("control" = "black", cols_group)),
     theme(legend.position = "top",
@@ -125,6 +124,13 @@ SGr_base <- function() {
     labs(y = "Treatment"),
     coord_flip()
   )
+  if(!show_vline) { # remove vert line
+    out[[1]] <- NULL
+  }
+  if(!show_point) {
+    out$point <- NULL
+  }
+  out
 }
 
 # dotplot of actual biomass (base) (part of fig 7):
@@ -238,6 +244,85 @@ df <- bio_pft4%>%
     trmt_lab = pad_labels(trmt_lab) # pad the labels with space
   )
 
+
+# ** arid and mesic -------------------------------------------------------
+# shows arid and mesic plots as separate symbol types on the same plot
+
+# for seperately plotting arid and mesic:
+arid_mesic_base <- function() {
+  list(
+    scale_shape_manual(values = c(16, 24)),
+    scale_linetype_manual(values = c(3, 5)),
+    geom_point(aes(shape = aridity_group), size = 1.5,
+               fill = "white") # white fill for empty triangles
+  )
+}
+
+# for vertical line
+ctrl_mean <- bio_SC3Gr_2 %>%
+  filter(str_detect(trmt_lab, "control"))
+
+# dotplot of ratios of biomass
+g1 <- bio_SC3Gr_2 %>%
+  ggplot(aes(SGr, trmt_lab, color = trmt_group, group = aridity_group)) +
+  geom_vline(data = ctrl_mean, aes(xintercept = SGr,
+                                   linetype = aridity_group),
+             alpha = 0.7) +
+  SGr_base(show_vline = FALSE, show_point = FALSE) +
+  arid_mesic_base()+
+  labs(x = "Shrub:C3 grass") +
+  # so that letter "a" shows up:
+  facet_wrap(~label) +
+  theme(strip.text = ggtext::element_markdown(hjust = 0),
+        legend.text = element_text(size = 7,
+                                   margin = margin(l = -5, r = -5, unit = 'pt')),
+        legend.box.margin = margin(-5, -10, -10, -10),
+        legend.margin = margin(0, 0, 0, 0)) +
+  guides(shape = guide_legend(ncol = 1, reverse = TRUE),
+         linetype = 'none') # no linetype legend
+
+g1
+biomass_ctrl <- df %>% # for horizontal lines
+  filter(warm == "ambient", intensity == "ambient")
+
+g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group,
+                       group = aridity_group)) +
+  geom_hline(data = biomass_ctrl,
+             aes(yintercept = biomass_m, linetype = aridity_group),
+             alpha = 0.7) +
+  # to get axes ranges to better
+  geom_blank(data = tibble(
+    PFT_label = c("**(b)** shrub", "**(c)** C3 grass"),
+    biomass_m = c(900, 70),
+    aridity_group = "aridity index < 0.54",
+    trmt_lab = factor(levels(df$trmt_lab)[1], levels = levels(df$trmt_lab)),
+    trmt_group = factor("control", levels = levels(df$trmt_group))
+  ))+
+  geom_errorbar(aes(ymin = biomass_m - biomass_se,
+                    ymax = biomass_m + biomass_se)) +
+
+  lemon::facet_rep_wrap(~PFT_label, ncol = 1, scales = "free_y")+
+  theme(strip.text = ggtext::element_markdown(hjust = 0),
+        legend.position = "none",
+        axis.text.x = element_text(angle = 90, vjust = 0.5)) +
+  labs(y = bio_lab0,
+       x = "Treatment") +
+  arid_mesic_base() +
+  # so trmt factor order
+  scale_x_discrete(drop = FALSE) +
+  scale_color_manual(values = c("control" = "black", cols_group))
+
+
+g2
+jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_aridity.jpeg",
+     res = 600, height = 4.3,  width = 6.3, units = 'in')
+
+gridExtra::grid.arrange(g1, g2,
+                        layout_matrix = rbind(c(1, 2)))
+
+dev.off()
+
+
 # ** arid only ------------------------------------------------------------
 # arid sites
 
@@ -252,7 +337,7 @@ g1 <- bio_SC3Gr_2 %>%
   # so that letter "a" shows up:
   facet_wrap(~label) +
   theme(strip.text = ggtext::element_markdown(hjust = 0))
-
+g1
 
 # dotplot of total biomass
 g2 <- df %>%
@@ -267,7 +352,7 @@ g2 <- df %>%
     trmt_group = factor("control", levels = levels(df$trmt_group))
   )) +
   bio_dot_base()
-
+g2
 
 jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_arid-only.jpeg",
      res = 600, height = 4,  width = 5, units = 'in')
