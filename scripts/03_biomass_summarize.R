@@ -196,6 +196,15 @@ bio_pft3_diff <- bio1 %>%
 
 # summary statistics ------------------------------------------------------
 
+# % of sites that c4 grasses were present at
+bio1 %>%
+  filter(PFT == 'p.warm.grass', SoilTreatment == 'loam',
+         intensity == 'ambient') %>%
+  group_by(warm) %>%
+  summarise(n = n(),
+            n_C4Pgrass = sum(biomass > 0), # num sites with c4pgrass
+            perc_C4Pgrass = n_C4Pgrass/n*100)
+
 # percent positive
 perc_pos <- function(x) sum(x > 0)/length(x)*100
 
