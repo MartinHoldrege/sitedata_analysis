@@ -314,6 +314,7 @@ g2 <-   ggplot(df, aes(trmt_lab, biomass_m, color = trmt_group,
 
 
 g2
+# figure 7 in the manuscript
 jpeg("figures/biomass/pub_qual/BDOT_shrub-grass-ratio_aridity.jpeg",
      res = 600, height = 4.3,  width = 6.3, units = 'in')
 
@@ -507,7 +508,7 @@ breaks_fun <- function(x) {
 
 g <- ggplot(bio_pft4_diff_0l,
             aes(y = bio_diff, color = intensity)) +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   labs(y = bio_lab1_change) +
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +

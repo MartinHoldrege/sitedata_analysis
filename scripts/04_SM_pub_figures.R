@@ -83,7 +83,7 @@ lyr_all_diff1 %>%
   scale_x_continuous(breaks = breaks, labels = break_labels) +
   labs(x = depth_lab,
        y = "Transpiration change (cm)") +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   theme(legend.position = "none")
 
 dev.off()
@@ -135,7 +135,7 @@ g <- lyr_pft_diff_0l %>%
   scale_x_continuous(breaks = breaks, labels = break_labels) +
   labs(x = depth_lab,
        y = "Transpiration change (cm)") +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   theme(legend.position = "none") +
   geom_text(aes(x = -15, y = diff_min + 0.1*range,
                                label = tag)) +
@@ -202,7 +202,7 @@ p_all <-  dly_lyr_means_all %>%
   mutate(lab1 = add_letters(depth_group, letters = c("a", "c")),
          lab2 = add_letters(depth_group, letters = c("b", "d"))) %>%
   ggplot(aes(x = day, color = intensity)) +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   scale_x_continuous(breaks = break_doys,
                      labels = break_labels) +
   labs(y = transp_lab0,
@@ -261,7 +261,7 @@ psize <- 0.5 # point size
 # not putting x variable here so figure base can be re-used for MAP
 g <-  ggplot(tot_transp_diff_0l,
              aes(color = intensity)) +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   labs(x = NULL) +
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +
@@ -398,7 +398,7 @@ df <- tot_transp %>%
 range <- range(c(df$TRANSP, df$EVAPTOT, df$drain))
 
 g0 <-  ggplot(df, aes(x = aridity_index, color = intensity)) +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   theme_classic() +
   labs(x = NULL) +
   theme(legend.title = element_blank()) +
@@ -509,7 +509,7 @@ jpeg("figures/soil_moisture/pub_qual/TPFTARID_T_vs_arid.jpeg", res = 600,
      height = 7, width = 2.5, units = 'in')
 g0 <- ggplot(tot_transp_pft_diff2,
              aes(x = aridity_index, color = intensity)) +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   labs(y = "Transpiration change (cm)") +
   geom_hline(yintercept = 0, linetype = 2,
              alpha = 0.7) +
@@ -561,7 +561,7 @@ g <- tot_transp_pft %>%
   ggplot(aes(x = aridity_index, y = TRANSP, color = intensity)) +
   geom_point() +
   geom_smooth(se = FALSE) +
-  scale_color_manual(values = cols_intensity) +
+  scale_color_manual(values = cols_intensity, drop = TRUE, limits = force) +
   labs(y =  transp_lab0,
        x = aridity_lab) +
   theme(legend.title = element_blank(),
