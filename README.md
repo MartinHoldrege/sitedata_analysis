@@ -98,3 +98,34 @@ script.
 not included here--profiles look very similar). 
 
 
+# Session info
+
+On June 9, 2022 I successfully re-ran the main analysis scripts (i.e. those in bold),
+with the following session info in R:
+
+`sessionInfo()`
+R version 4.1.3 (2022-03-10)
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+Running under: Windows 10 x64 (build 19043)
+
+Matrix products: default
+
+locale:
+[1] LC_COLLATE=English_United States.1252  LC_CTYPE=English_United States.1252    LC_MONETARY=English_United States.1252
+[4] LC_NUMERIC=C                           LC_TIME=English_United States.1252    
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] dtplyr_1.2.1    forcats_0.5.1   stringr_1.4.0   dplyr_1.0.8     purrr_0.3.4     readr_2.1.2     tidyr_1.2.0     tibble_3.1.6    ggplot2_3.3.5  
+[10] tidyverse_1.3.1
+
+loaded via a namespace (and not attached):
+ [1] cellranger_1.1.0  pillar_1.7.0      compiler_4.1.3    dbplyr_2.1.1      tools_4.1.3       bit_4.0.4         jsonlite_1.8.0    lubridate_1.8.0  
+ [9] lifecycle_1.0.1   gtable_0.3.0      pkgconfig_2.0.3   rlang_1.0.2       reprex_2.0.1      rstudioapi_0.13   DBI_1.1.2         cli_3.2.0        
+[17] parallel_4.1.3    haven_2.4.3       xml2_1.3.3        withr_2.5.0       httr_1.4.2        fs_1.5.2          generics_0.1.2    vctrs_0.3.8      
+[25] hms_1.1.1         bit64_4.0.5       grid_4.1.3        tidyselect_1.1.2  data.table_1.14.2 glue_1.6.2        R6_2.5.1          plotrix_3.8-2    
+[33] fansi_1.0.3       readxl_1.4.0      vroom_1.5.7       tzdb_0.3.0        modelr_0.1.8      magrittr_2.0.2    backports_1.4.1   scales_1.1.1     
+[41] ellipsis_0.3.2    rvest_1.0.2       assertthat_0.2.1  colorspace_2.0-3  utf8_1.2.2        stringi_1.7.6     munsell_0.5.0     broom_0.7.12     
+[49] crayon_1.5.1     

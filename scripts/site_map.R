@@ -79,7 +79,7 @@ r4 <- raster::crop(r4, bbox_new) # cut to size of states
 # map of aridity points ------------------------------------------------------
 
 # just showing points (colored by aridity) and underlying extent of sagebrush
-
+# Creates figure 1 in manuscript
 jpeg("figures/maps/site_map_sagebrush.jpg",
      res = 600, height = 4.5, width = 4.5, units = "in")
 tmap_mode("plot")
