@@ -16,14 +16,22 @@ Exceptions always exist. All dependencies and files loaded, are at the top of sc
 and what csv files are read in. 
 
 
-Scripts in bold are needed to recreate the main analyses in the manuscript, using summarized data provided on Zenodo 
-(which includes the output from the `01_summary_dfs_200sites.R` script). 
-To run these scripts in bold, the following data files from the associated zenodo data repository should be put
+Scripts in bold are needed to recreate the main analyses in the manuscript, using summarized data that are found in the
+version of this repository found on zenodo (data files are not put on github.)
+(Many of the data files are output from the `01_summary_dfs_200sites.R` script). 
+To run these scripts in bold, the following data files should be
 in the `data-processed>site_means` folder: biomass_mean_v1.csv, dly_mean_by_lyr-all_v1.csv, dly_mean_by_lyr-PFT_v1.csv, 
 sw2_dly_means_v1.csv, sw2_yr_means_v1.csv, yr_mean_by_lyr-all_v1.csv, yr_mean_by_lyr-PFT_v1.csv, sw2_mo_means_v1.csv. Alternatively, just
 adjust the file paths to where ever you put those files. 
 
+The version of this repository hosted on zenodo contains the necessary data
+to run the scripts that are in bold (which as mentioned above, are the ones
+necessary to recreate the results (and figures) in the manuscript).
+
 Contact me (martinholdrege at gmail dot com) if there are questions about this repository. 
+
+On the version of this repository put on Zenodo, empty folders are kept, these
+are the empty folders that get populated by the output the scripts. 
 
 ## Summarizing/analysis/etc. scripts
 

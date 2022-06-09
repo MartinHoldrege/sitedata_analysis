@@ -1,6 +1,6 @@
 # Data Dictionary
 
-This documents describes data files in this filder (note these
+This documents describes data files in this folder (note these
 data files are not on github because they are large).
 The data files described are the ones that are needed to reproduce the main results
 presented in the manuscript. For each file there is a brief description,
