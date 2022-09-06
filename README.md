@@ -1,7 +1,8 @@
 # sitedata_analysis
 
-Analysis of data from STEPWAT2 simulations done for study on the effects of increased precipitation intensity on sagebrush dominated ecosystems. 
-Simulations conducted for 200 sites across the western U.S. 
+Analysis of data from STEPWAT2 simulations done for study on the effects of increased precipitation intensity on sagebrush dominated ecosystems. The manuscript that uses this analsis was published in Ecosystems in 2022 (https://doi.org/10.1007/s10021-022-00778-1). 
+
+Simulations were conducted for 200 sites across the western U.S. 
 
 # Description of important scripts.
 
