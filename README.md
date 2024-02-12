@@ -4,6 +4,8 @@ Analysis of data from STEPWAT2 simulations done for study on the effects of incr
 
 Simulations were conducted for 200 sites across the western U.S. 
 
+Code from this repository, along with data is archived on Zenodo: [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5639644.svg)](https://doi.org/10.5281/zenodo.5639644)
+
 # Description of important scripts.
 
 R scripts are found in the `scripts` folder. Other folders are empty 
